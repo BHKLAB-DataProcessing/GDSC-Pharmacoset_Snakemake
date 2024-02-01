@@ -1,0 +1,9 @@
+snakefile: "../Snakefile"
+cores: 10
+jobs: 256
+show-failed-logs: True
+keep-going: True
+rerun-incomplete: True
+printshellcmds: False
+use-conda: True
+keep-remote: True

@@ -1,0 +1,10 @@
+rawdata
+procdata
+metadata/*
+results
+.snakemake/
+logs/
+sandbox
+cog.sanger.ac.uk/
+.RData
+.RDataTmp
