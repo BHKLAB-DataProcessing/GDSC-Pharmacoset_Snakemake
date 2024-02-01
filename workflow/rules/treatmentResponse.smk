@@ -13,7 +13,7 @@ version = config["GDSC_version"]
 release = config["GDSC_release"]
 treatmentResponse = config["treatmentResponse"]
 
-rule download_all:
+rule process_allTreatmentResponse:
     input:
         preprocessed = f"procdata/treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.qs"
 
@@ -38,6 +38,7 @@ rule preprocess_treatmentResponse:
     input:
         rawdata = "rawdata/treatmentResponse/release_{release}/{version}_public_raw_data.csv",
         processed = "rawdata/treatmentResponse/release_{release}/{version}_fitted_dose_response.xlsx",
+        treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
     output:
         preprocessed = "procdata/treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.qs"
     log:

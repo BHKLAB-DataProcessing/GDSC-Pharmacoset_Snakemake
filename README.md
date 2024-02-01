@@ -1,4 +1,19 @@
 
+# Current Implementation
+
+## Directed Acyclic Graph (DAG)
+``` 
+snakemake --profile workflow/profiles/ process_allTreatmentResponse preprocess_metadata  --dag | dot -Tsvg > resources/dag.svg
+```
+
+![DAG](./resources/dag.svg)
+
+## filegraph
+```
+snakemake --profile workflow/profiles/ process_allTreatmentResponse preprocess_metadata  --rulegraph | dot -Tsvg > resources/rulegraph.svg
+```
+
+![filegraph](./resources/filegraph.svg)
 
 
 # Setup

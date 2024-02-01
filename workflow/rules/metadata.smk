@@ -17,8 +17,13 @@ release = config["GDSC_release"]
 
 rule preprocess_metadata:
     input:
-        treatmentMetadata = expand(procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv", version = version, release = release),
-        sampleMetadata = expand(procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv", version = version, release = release)
+        treatmentMetadata = expand(
+            procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv", 
+            version = version, release = release),
+        sampleMetadata = expand(
+            procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv", 
+            version = version, release = release),
+        geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
 
 rule downloadSampleMetadata:
     input:
@@ -98,7 +103,7 @@ rule preprocess_treatmentMetadata:
 
 
 # This rule is a wrapper that retrieves the Ensembl annotation for a given species and build.
-rule get_annotation:
+rule download_EnsemblAnnotation:
     output:
         ensemblAnnotation = metadata / "Ensembl/{}_{}annotation.gtf".format(
             config["metadata"]["referenceGenome"]["build"],
@@ -110,14 +115,14 @@ rule get_annotation:
         build = config["metadata"]["referenceGenome"]["build"],
         flavor="",  # optional, e.g. chr_patch_hapl_scaff, see Ensembl FTP.
     log:
-        logs / metadata/ "get_annotation.log",
+        logs / metadata/ "download_EnsemblAnnotation.log",
     wrapper:
         "v3.3.6/bio/reference/ensembl-annotation"
 
 rule preprocess_geneAnnotation:
     input:
         geneAnnotation = metadata / "cellModelPassports_geneAnnotation.csv",
-        ensemblAnnotation = rules.get_annotation.output.ensemblAnnotation
+        ensemblAnnotation = rules.download_EnsemblAnnotation.output.ensemblAnnotation
     output:
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
     log: logs / metadata / "preprocess_geneAnnotation.log"

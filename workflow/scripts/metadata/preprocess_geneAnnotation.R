@@ -36,7 +36,8 @@ names(ensembl_dt) <- paste0("ENSEMBL.", toupper(names(ensembl_dt)))
 mergedGeneAnnotation <- merge(CMP_geneAnnotation, ensembl_dt, by.x = "CMP.ENSEMBL_GENE_ID", by.y = "ENSEMBL.GENE_ID", all.x = TRUE)
 
 # for each column in x, if al the values are NA, remove the column
-mergedGeneAnnotation <- x[, .SD, .SDcols = colnames(x)[colSums(is.na(x)) < nrow(x)]]
+mergedGeneAnnotation <- mergedGeneAnnotation[
+    , .SD, .SDcols = colnames(mergedGeneAnnotation)[colSums(is.na(mergedGeneAnnotation)) < nrow(mergedGeneAnnotation)]]
 
 # replace any "" with NA
 mergedGeneAnnotation[mergedGeneAnnotation == ""] <- NA
