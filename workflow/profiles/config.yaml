@@ -1,5 +1,5 @@
 snakefile: "../Snakefile"
-cores: 10
+cores: 30
 jobs: 256
 show-failed-logs: True
 keep-going: True

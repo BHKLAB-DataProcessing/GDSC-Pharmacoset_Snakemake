@@ -40,14 +40,14 @@ rule download_treatmentResponse:
         mv {input.processed} {output.processed} > {log} 2>&1
         """
 
-rule preprocess_treatmentResponse:
+rule build_treatmentResponseExperiment:
     input:
         rawdata = rawdata / "treatmentResponse/release_{release}/{version}_public_raw_data.csv",
         processed = rawdata / "treatmentResponse/release_{release}/{version}_fitted_dose_response.xlsx",
         treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
         sampleMetadata = procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv", 
     output:
-        tre = "procdata/treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.qs",
+        tre = "procdata/treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.RDS",
         raw = procdata / "treatmentResponse/{version}_{release}_treatmentResponse_raw.tsv",
         published_profiles = procdata / "treatmentResponse/{version}_{release}_treatmentResponse_published_profiles.tsv",
     log:
@@ -57,4 +57,4 @@ rule preprocess_treatmentResponse:
     threads:
         10
     script:
-        scripts / "treatmentResponse/preprocess_treatmentResponse.R"
+        scripts / "treatmentResponse/build_treatmentResponseExperiment.R"

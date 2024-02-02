@@ -28,7 +28,6 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image()
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
@@ -146,10 +145,7 @@ rse_list <- BiocParallel::bplapply(
     },
     BPPARAM = BiocParallel::MulticoreParam(workers = THREADS)
 )
-names(rse_list) <- dataset_types
-
-
-
+names(rse_list) <- paste0("rnaseq.", dataset_types)
 
 
 print("Saving Output Files")
@@ -158,12 +154,12 @@ print("Saving Output Files")
 saveRDS(rse_list, file = OUTPUT$rse_list)
 
 
-result <- lapply(names(rse_list), function(x){
+result <- lapply(dataset_types, function(x){
     print(paste0("Writing ", x, " to ", OUTPUT[[x]]))
     dir.create(dirname(OUTPUT[[x]]), recursive = TRUE, showWarnings = FALSE)
 
     write.table(
-        x = SummarizedExperiment::assay(rse_list[[x]]), 
+        x = SummarizedExperiment::assay(rse_list[[paste0("rnaseq.", x)]]), 
         file = OUTPUT[[x]], 
         quote = FALSE, 
         sep = "\t", 

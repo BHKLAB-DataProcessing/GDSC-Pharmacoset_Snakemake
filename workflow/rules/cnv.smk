@@ -35,7 +35,14 @@ rule make_CNV_SE:
         sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
     output:
-        CNV_se = "results/data/cnv/CNV_SE.qs",
+        rse_list = "results/data/cnv/cnv_rse_list.RDS",
+        total_copy_number = procdata / "cnv" / "total_copy_number.tsv",
+        cn_category = procdata / "cnv" / "cn_category.tsv",
+        seg_mean = procdata / "cnv" / "seg_mean.tsv",
+        gene_mean = procdata / "cnv" / "gene_mean.tsv",
+        num_snps = procdata / "cnv" / "num_snps.tsv",
+        gatk_mean_log2_copy_ratio = procdata / "cnv" / "gatk_mean_log2_copy_ratio.tsv",
+        metadata = procdata / "cnv" / "cnv_metadata.json"
     log:
         "logs/cnv/preprocessCNV.log",
     conda:
@@ -43,7 +50,7 @@ rule make_CNV_SE:
     threads:
         6
     script:
-        "../scripts/cnv/preprocess_CNV.R"
+        scripts / "cnv/make_CNV_SE.R"
 
 
 

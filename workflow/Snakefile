@@ -5,6 +5,7 @@ metadata = Path(config["directories"]["metadata"])
 results = Path(config["directories"]["results"])
 logs = Path(config["directories"]["logs"])
 
+
 include: "rules/metadata.smk"
 include: "rules/treatmentResponse.smk"
 include: "rules/rnaseq.smk"
@@ -14,5 +15,18 @@ include: "rules/cnv.smk"
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
+
 rule build_Pharmacoset:
     input:
+        treatmentResponseExperiment = procdata / f"treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.RDS",
+        treatmentMetadata = procdata / metadata / f"{version}_{release}_preprocessed_treatmentMetadata.tsv",
+        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
+        summarizedExperimentLists = [
+            rules.make_RNASEQ_SE.output.rse_list,
+            rules.make_CNV_SE.output.rse_list
+],
+    output:
+        "results/pharmacoset/pharmacoset.RData",
+    script:
+        "scripts/build_PharmacoSet.R"
