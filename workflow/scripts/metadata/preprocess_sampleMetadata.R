@@ -55,6 +55,7 @@ names(CMP_sampleAnnotation) <- ifelse(
     paste0("GDSC.", names(CMP_sampleAnnotation)), 
     gsub("^GDSC", "GDSC.", names(CMP_sampleAnnotation)))
 setnames(CMP_sampleAnnotation, "GDSC.sample_id", "CMP.sampleid")
+setnames(CMP_sampleAnnotation, "GDSC.model_id", "CMP.model_id")
 setnames(CMP_sampleAnnotation, "GDSC.model_name", "GDSC.sampleid")
 setnames(CMP_sampleAnnotation, "GDSC.CCLE_ID", "CCLE.sampleid")
 CMP_sampleAnnotation[, GDSC.sampleid := cleanCharacterStrings(GDSC.sampleid)]
@@ -102,7 +103,7 @@ sampleMetadata <- merge(sampleMetadata, CMP_sampleAnnotation[, !c("GDSC.sampleid
 
 # get all the column names, and reorder so that GDSC.sampleid is the first column and CCLE.sampleid is the second column
 
-firstcols <- c("GDSC.sampleid", "GDSC.Sample_Name", "CCLE.sampleid", "GDSC.BROAD_ID", "GDSC.RRID", "GDSC.model_id", "CMP.sampleid")
+firstcols <- c("GDSC.sampleid", "GDSC.Sample_Name", "CCLE.sampleid", "GDSC.BROAD_ID", "GDSC.RRID", "CMP.model_id", "CMP.sampleid")
 columnNames <- c(firstcols, names(sampleMetadata)[!names(sampleMetadata) %in% firstcols])
 sampleMetadata <- sampleMetadata[, columnNames, with = FALSE]
 

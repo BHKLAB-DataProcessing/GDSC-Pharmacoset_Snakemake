@@ -7,4 +7,12 @@ logs = Path(config["directories"]["logs"])
 
 include: "rules/metadata.smk"
 include: "rules/treatmentResponse.smk"
+include: "rules/rnaseq.smk"
+include: "rules/cnv.smk"
 
+
+version = config["GDSC_version"]
+release = config["GDSC_release"]
+
+rule build_Pharmacoset:
+    input:

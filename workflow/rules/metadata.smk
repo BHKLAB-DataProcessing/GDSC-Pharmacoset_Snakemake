@@ -3,6 +3,7 @@ from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
 configfile: "workflow/config/pipeline.yaml"
+conda_env = "../envs/metadata.yaml"
 
 rawdata = Path(config["directories"]["rawdata"])
 procdata = Path(config["directories"]["procdata"])
@@ -88,6 +89,7 @@ rule preprocess_sampleMetadata:
     output:
         sampleMetadata = procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv",
     log: logs / metadata / "{version}_{release}_preprocess_sampleMetadata.log"
+    conda: conda_env
     script:
         scripts / metadata / "preprocess_sampleMetadata.R"
 
@@ -98,6 +100,7 @@ rule preprocess_treatmentMetadata:
     output:
         treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
     log: logs / metadata / "{version}_{release}_preprocess_treatmentMetadata.log"
+    conda: conda_env
     script:
         scripts / metadata / "preprocess_treatmentMetadata.R"
 
@@ -126,6 +129,7 @@ rule preprocess_geneAnnotation:
     output:
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
     log: logs / metadata / "preprocess_geneAnnotation.log"
+    conda: conda_env
     script:
         scripts / metadata / "preprocess_geneAnnotation.R"
 
