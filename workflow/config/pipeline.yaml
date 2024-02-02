@@ -114,14 +114,14 @@ molecularProfiles:
     geneAnnotation:
       description: "A list of all genes used in the Cell Model Passports, with HUGO, Ensembl, Entrez and Refseq annotation."
       url: "https://cog.sanger.ac.uk/cmp/download/gene_identifiers_latest.csv.gz"
+  
   rnaseq:
     rawdata:
       description: "Data available from EGA under accession EGAD00001001357. 466 samples. 
         Access to raw cram files requires DAC approval. NOTE: This data is not yet used in the pipeline"
       url: "https://ega-archive.org/datasets/EGAD00001001357"
     processed:
-      description: "Read counts, TPM & FPKM-values for all sequenced models 
-        including cell lines and organoids."
+      description: "Read counts, TPM & FPKM-values for all sequenced models including cell lines and organoids."
       url: "https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip"
 
   cnv:

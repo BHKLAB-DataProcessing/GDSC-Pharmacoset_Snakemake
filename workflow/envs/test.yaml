@@ -1,0 +1,12 @@
+dependencies:
+  - r-base=4.3.1
+  - r-essentials=4.3.0
+  - r-data.table=1.14.8
+  - r-cellosaurus=0.7.2
+  - r-devtools
+  - bioconductor-biomaRt
+  - bioconductor-CoreGx
+  - bioconductor-annotationdbi
+  - r-rsqlite
+  - bioconductor-affy
+  - bioconductor-oligo
