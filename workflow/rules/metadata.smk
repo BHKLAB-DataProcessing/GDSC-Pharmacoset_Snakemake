@@ -15,11 +15,17 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
+annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.1"
+
+PubChemAnnotations = ['ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code']
 
 rule preprocess_metadata:
     input:
         treatmentMetadata = expand(
             procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv", 
+            version = version, release = release),
+        treatmentMetadata_annot = expand(
+            procdata / metadata / "{version}_{release}_treatmentMetadata_annotated.tsv",
             version = version, release = release),
         sampleMetadata = expand(
             procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv", 
@@ -133,3 +139,58 @@ rule preprocess_geneAnnotation:
     script:
         scripts / metadata / "preprocess_geneAnnotation.R"
 
+##### ANNOTATIONS
+
+rule map_treatments_to_PubChemCID:
+    input:
+        treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
+    output:
+        treatment_CIDS = procdata / metadata / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
+    log: logs / metadata / "{version}_{release}_map_treatments_to_PubChemCID.log"
+    threads:
+        24
+    container: 
+        annotationGx_docker
+    script:
+        scripts / metadata / "map_treatments_to_PubChemCID.R"
+
+rule annotate_PubChemCIDS:
+    input:
+        treatment_CIDS = procdata / metadata / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
+    output:
+        annotated_CIDs = procdata / metadata / "{version}_{release}_CIDS_{annotationType}.tsv",
+    log: logs / metadata / "{version}_{release}_CIDS_{annotationType}.log"
+    threads:
+        4
+    container: 
+        annotationGx_docker
+    script:
+        scripts / metadata / "annotate_PubChemCIDS.R"
+
+rule annotate_ChEMBL:
+    input:
+        annotated_CIDS = procdata / metadata / "{version}_{release}_CIDS_ChEMBL ID.tsv",
+    output:
+        annotated_ChEMBL = procdata / metadata / "{version}_{release}_ChEMBL_annotated.tsv",
+    log: logs / metadata / "{version}_{release}_ChEMBL_annotated.log"
+    threads:
+        4
+    container: 
+        annotationGx_docker
+    script:
+        scripts / metadata / "annotate_ChEMBL.R"
+
+rule annotated_TreatmentData:
+    input:
+        annotated_CIDS = expand(
+            procdata / metadata / "{version}_{release}_CIDS_{annotationType}.tsv",
+                version = version, release = release, annotationType = PubChemAnnotations),
+        annotated_ChEMBL = procdata / metadata / "{version}_{release}_ChEMBL_annotated.tsv",
+        treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
+    output:
+        annotated_treatmentMetadata = procdata / metadata / "{version}_{release}_treatmentMetadata_annotated.tsv",
+    log: logs / metadata / "{version}_{release}_treatmentMetadata_annotated.log"
+    container: 
+        annotationGx_docker
+    script:
+        scripts / metadata / "combine_annotated_treatmentData.R"

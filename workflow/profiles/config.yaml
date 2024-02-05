@@ -7,3 +7,5 @@ keep-incomplete: True
 rerun-incomplete: True
 printshellcmds: False
 keep-remote: True
+use-conda: True
+use-singularity: True

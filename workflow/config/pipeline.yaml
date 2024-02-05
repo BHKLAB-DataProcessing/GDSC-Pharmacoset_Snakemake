@@ -127,4 +127,23 @@ molecularProfiles:
   cnv:
     WES_CNV: 
       description: "Total copy number and categorical CNA calls derived from WES data processed through PureCN."
-      url: "https://cog.sanger.ac.uk/cmp/download/WES_pureCN_CNV_genes_20221213.zip"
+      url: "https://cog.sanger.ac.uk/cmp/download/WES_pureCN_CNV_genes_20221213.zip"  
+
+  mutation:
+    WGS_VCF: 
+      description: "Caveman and Pindel processed VCFs with cancer driver annotation."
+      url: "https://cog.sanger.ac.uk/cmp/download/mutations_wgs_vcf_20221123.zip"
+    WES_VCF: 
+      description: "Caveman and Pindel processed VCFs with cancer driver annotation."
+      url: "https://cog.sanger.ac.uk/cmp/download/mutations_wes_vcf_20221010.zip"
+    all_mutations: 
+      description: "A list of all mutations present in all sequenced models."
+      url: "https://cog.sanger.ac.uk/cmp/download/mutations_all_20230202.zip"
+    Genes_Metadata:
+      description: "The cancer driver gene list used by the Cell Model Passports"
+      url: "https://cog.sanger.ac.uk/cmp/download/driver_mutations_20221208.csv"
+
+  fusion:
+    gene_fusions:
+      description: TODO::(add description)
+      url: "https://cog.sanger.ac.uk/cmp/download/Fusions_20230725.zip"

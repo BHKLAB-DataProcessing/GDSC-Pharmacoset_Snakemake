@@ -22,7 +22,7 @@ Ensure you have conda installed. If not, install [miniconda](https://docs.conda.
 Install mamba for faster package management:
 
 ``` bash
-conda install mamba -n base -c conda-forge
+conda install mamba -n base -c conda-forge 
 ```
 
 Create a conda environment with the required dependencies:
