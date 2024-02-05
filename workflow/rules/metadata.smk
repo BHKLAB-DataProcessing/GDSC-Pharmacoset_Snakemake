@@ -15,9 +15,9 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.1"
+annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.1.1"
+cellosaurus_docker = "docker://quay.io/biocontainers/r-cellosaurus:0.8.1--r43hdfd78af_0"
 
-PubChemAnnotations = ['ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code']
 
 rule preprocess_metadata:
     input:
@@ -145,7 +145,7 @@ rule map_treatments_to_PubChemCID:
     input:
         treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
     output:
-        treatment_CIDS = procdata / metadata / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
+        treatment_CIDS = procdata / metadata / "annotation" / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
     log: logs / metadata / "{version}_{release}_map_treatments_to_PubChemCID.log"
     threads:
         24
@@ -156,9 +156,9 @@ rule map_treatments_to_PubChemCID:
 
 rule annotate_PubChemCIDS:
     input:
-        treatment_CIDS = procdata / metadata / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
+        treatment_CIDS = procdata / metadata / "annotation" / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
     output:
-        annotated_CIDs = procdata / metadata / "{version}_{release}_CIDS_{annotationType}.tsv",
+        annotated_CIDs = procdata / metadata / "annotation" / "{version}_{release}_CIDS_{annotationType}.tsv",
     log: logs / metadata / "{version}_{release}_CIDS_{annotationType}.log"
     threads:
         4
@@ -169,9 +169,9 @@ rule annotate_PubChemCIDS:
 
 rule annotate_ChEMBL:
     input:
-        annotated_CIDS = procdata / metadata / "{version}_{release}_CIDS_ChEMBL ID.tsv",
+        annotated_CIDS = procdata / metadata / "annotation" / "{version}_{release}_CIDS_ChEMBL ID.tsv",
     output:
-        annotated_ChEMBL = procdata / metadata / "{version}_{release}_ChEMBL_annotated.tsv",
+        annotated_ChEMBL = procdata / metadata / "annotation" / "{version}_{release}_ChEMBL_annotated.tsv",
     log: logs / metadata / "{version}_{release}_ChEMBL_annotated.log"
     threads:
         4
@@ -180,12 +180,14 @@ rule annotate_ChEMBL:
     script:
         scripts / metadata / "annotate_ChEMBL.R"
 
+
+PubChemAnnotations = ['ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code']
 rule annotated_TreatmentData:
     input:
         annotated_CIDS = expand(
-            procdata / metadata / "{version}_{release}_CIDS_{annotationType}.tsv",
+            procdata / metadata / "annotation" / "{version}_{release}_CIDS_{annotationType}.tsv",
                 version = version, release = release, annotationType = PubChemAnnotations),
-        annotated_ChEMBL = procdata / metadata / "{version}_{release}_ChEMBL_annotated.tsv",
+        annotated_ChEMBL = procdata / metadata / "annotation" / "{version}_{release}_ChEMBL_annotated.tsv",
         treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
     output:
         annotated_treatmentMetadata = procdata / metadata / "{version}_{release}_treatmentMetadata_annotated.tsv",
@@ -194,3 +196,23 @@ rule annotated_TreatmentData:
         annotationGx_docker
     script:
         scripts / metadata / "combine_annotated_treatmentData.R"
+
+
+rule getCellosaurusObject:
+    output:
+        cellosaurus_object = "metadata/cellosaurus.RDS",
+    container: 
+        cellosaurus_docker
+    script:
+        scripts / metadata / "getCellosaurus/getCellosaurusObject.R"
+
+rule mapSampleNamesToCellosaurusAccessionID:
+    input:
+        sampleMetadata = procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv",
+        cellosaurus_object = "metadata/cellosaurus.RDS", 
+    output:
+        sample_Cellosaurus_file = procdata / metadata / "{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
+    container: 
+        cellosaurus_docker
+    script:
+        scripts / metadata / "getCellosaurus/mapCellosaurus.R"

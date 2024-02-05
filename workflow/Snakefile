@@ -18,7 +18,7 @@ include: "rules/fusion.smk"
 rule build_Pharmacoset:
     input:
         treatmentResponseExperiment = procdata / f"treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.RDS",
-        treatmentMetadata = procdata / metadata / f"{version}_{release}_preprocessed_treatmentMetadata.tsv",
+        annotated_treatmentMetadata = procdata / metadata / f"{version}_{release}_treatmentMetadata_annotated.tsv",
         sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
         summarizedExperimentLists = [

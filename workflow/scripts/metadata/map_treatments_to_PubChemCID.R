@@ -17,7 +17,7 @@ treatmentMetadata <- data.table::fread(INPUT$treatmentMetadata)
 
 
 compound_nameToCIDS <- AnnotationGx::getPubChemCompound(
-    treatmentMetadata[1:20, GDSC.treatmentid],
+    treatmentMetadata[, GDSC.treatmentid],
     from='name',
     to='cids',
     batch = FALSE,
