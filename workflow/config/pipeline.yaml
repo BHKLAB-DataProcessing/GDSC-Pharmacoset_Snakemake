@@ -147,3 +147,20 @@ molecularProfiles:
     gene_fusions:
       description: TODO::(add description)
       url: "https://cog.sanger.ac.uk/cmp/download/Fusions_20230725.zip"
+
+  microarray:
+    description: "Data taken from https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-3610/." 
+    metadata_tsv: 
+      description: TODO::(add description)
+      url: "https://www.ebi.ac.uk/biostudies/files/E-MTAB-3610/E-MTAB-3610.tsv"
+    metadata_srdf: 
+      description: TODO::(add description)
+      url: "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/E-MTAB-3610.sdrf.txt"
+    metadata_json: 
+      description: TODO::(add description)
+      url: "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/raw-data_filelist.json"
+    processed: 
+      description: "RMA normalised basal expression profiles for all the cell-lines."
+      reference: "https://www.cancerrxgene.org/gdsc1000/GDSC1000_WebResources/Home.html"
+      url: "https://www.cancerrxgene.org/gdsc1000/GDSC1000_WebResources///Data/preprocessed/Cell_line_RMA_proc_basalExp.txt.zip"
+  

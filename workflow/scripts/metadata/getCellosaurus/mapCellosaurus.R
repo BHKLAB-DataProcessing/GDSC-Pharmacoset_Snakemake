@@ -39,4 +39,10 @@ annotated_sampleMetadata <- merge(
     cellosaurus_DT[!is.na(cellosaurus.sangerModelId), ], 
     by.x = "CMP.model_id", by.y = "cellosaurus.sangerModelId", all.x = TRUE, allow.cartesian = TRUE)
 
+list_columsn <-sapply(annotated_sampleMetadata, is.list)
+
+for (i in names(list_columsn)[list_columsn]) {
+    annotated_sampleMetadata[[i]] <- sapply(annotated_sampleMetadata[[i]], function(x) paste(x, collapse = ";"))
+}
+
 data.table::fwrite(annotated_sampleMetadata, OUTPUT[['sample_Cellosaurus_file']], sep="\t", quote = FALSE, row.names = FALSE, col.names = TRUE)

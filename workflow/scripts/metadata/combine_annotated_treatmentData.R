@@ -32,17 +32,15 @@ data.table::setnames(annotated_DT, oldNames, newNames)
 
 
 ##### rename chembl
-# [1] "molecule.chembl.id"        "action.type"              
-# [3] "mechanism.of.action"       "molecular.mechanism"      
-# [5] "mechanism.comment"         "parent.molecule.chembl.id"
-# [7] "target.chembl.id" 
+# [1] "Molecule Chembl ID"        "Action Type"              
+# [3] "Mechanism Of Action"       "Molecular Mechanism"      
+# [5] "Mechanism Comment"         "Parent Molecule Chembl ID"
+# [7] "Target Chembl ID"  
+oldNames <- c("Molecule Chembl ID", "Action Type", "Mechanism Of Action", "Molecular Mechanism", "Mechanism Comment", "Parent Molecule Chembl ID", "Target Chembl ID")
 newNames <- c(
     "molecule.chembl.id", "chembl.ActionType", "chembl.MechanismOfAction", "chembl.MolecularMechanism", 
     "chembl.MechanismComment", "chembl.ParentMoleculeChEMBL.ID", "chembl.TargetChEMBL.ID")
 
-oldNames <- c(
-    "molecule.chembl.id", "action.type", "mechanism.of.action", 
-    "molecular.mechanism", "mechanism.comment", "parent.molecule.chembl.id", "target.chembl.id")
 
 data.table::setnames(annotated_ChEMBL, oldNames, newNames)
 

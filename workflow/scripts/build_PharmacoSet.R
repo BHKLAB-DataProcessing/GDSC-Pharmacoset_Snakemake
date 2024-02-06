@@ -36,8 +36,8 @@ suppressPackageStartupMessages(library(PharmacoGx))
 # 0.2 Read in the metadata
 # --------------------------
 
-treatmentMetadata <- data.table::fread(INPUT$treatmentMetadata)
-sampleMetadata <- data.table::fread(INPUT$sampleMetadata)
+treatmentMetadata <- data.table::fread(INPUT$annotated_treatmentMetadata)
+sampleMetadata <- data.table::fread(INPUT$annotated_sampleMetadata)
 geneAnnotation  <- data.table::fread(INPUT$geneAnnotation)
 
 
@@ -119,6 +119,8 @@ mae <- MultiAssayExperiment::MultiAssayExperiment(
 )
 print(paste("MultiAssayExperiment:\n", capture.output(show(mae)), sep = ""))
 
+
+PSetName <- "GDSC"
 pset <- PharmacoGx::PharmacoSet2(
     name = "GDSC",
     treatment = treatmentMetadata,

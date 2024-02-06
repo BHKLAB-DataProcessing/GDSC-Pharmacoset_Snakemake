@@ -19,7 +19,7 @@ rule build_Pharmacoset:
     input:
         treatmentResponseExperiment = procdata / f"treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.RDS",
         annotated_treatmentMetadata = procdata / metadata / f"{version}_{release}_treatmentMetadata_annotated.tsv",
-        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        annotated_sampleMetadata = procdata / metadata / f"{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
         summarizedExperimentLists = [
             rules.make_RNASEQ_SE.output.rse_list,
