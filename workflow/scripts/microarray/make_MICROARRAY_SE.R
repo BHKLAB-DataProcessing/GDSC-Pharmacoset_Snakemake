@@ -9,7 +9,7 @@
 #   the expression matrix. The final output is a list of 3 items:
 #       1. expr_annot: a data.table containing the gene annotations
 #       2. sample_annotations: a data.table containing the sample annotations
-#       3. expr: a data.table containing the normalized expression matrix
+#       3. expr: a data.table containing the normalized expression matrixconda activate microarray
 
 
 # PACKAGE DEPENDENCIES:
@@ -32,9 +32,11 @@ if(exists("snakemake")){
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
 }
-# if (!requireNamespace("preprocessCore", quietly = TRUE)) {
-#     BiocManager::install("preprocessCore", configure.args = "--disable-threading", ask = FALSE)
-# }
+
+# Need to do this because affy:rma() uses parallel processing which is not supported in the current environment
+# and raises a ERROR; return code from pthread_create() is 22
+# BiocManager::install("preprocessCore", configure.args = "--disable-threading", force=TRUE)
+
 
 # exit
 celDirectory <- INPUT$CELfiles
@@ -48,7 +50,7 @@ sample_annotations <- INPUT$CEL_metadata
 
 # fileList <- list.files(celDirectory, pattern = ".cel", full.names = TRUE)
 message("Reading in the .cel files and performing RMA normalization")
-affyFiles <- affy::read.affybatch(celDirectory[1:10L])
+affyFiles <- affy::read.affybatch(celDirectory[1:20])
 
 eSet <- affy::rma(affyFiles)
 mtx <- affy::exprs(eSet)                            
@@ -107,18 +109,31 @@ expr <- data.table::as.data.table(mtx_collapsed, keep.rownames = "gene.symbol")
 
 # subset gene_annotations on SYMBOL with the values in expr$gene.symbol
 # only keep the rows in gene_annotations that have a match in expr
+data.table::setkey(gene_annotations, SYMBOL)
 
-expr_annot <- gene_annotations[gene_annotations$SYMBOL %in% expr$gene.symbol, .(SYMBOL, GENENAME, ENSEMBL, ENTREZID, UNIPROT, PMID)]
+expr_annot <- unique(gene_annotations[expr$gene.symbol, .(SYMBOL, GENENAME, ENSEMBL, ENTREZID, UNIPROT, PMID)], by = "SYMBOL")
+
+metadata <- list(
+    data_source = snakemake@config$molecularProfiles$microarray,
+    CEL_files = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files",
+    annotation = "microarray", 
+    date_created = Sys.time(),
+    sessionInfo = capture.output(sessionInfo()))
+
 
 
 # ----------------------------- OUTPUT ----------------------------- ##
-
-
 # combined expr_annot and sample_annotations and mtx into a list of 3 items
-outputList <- list(expr_annot, sample_annotations, expr)
-names(outputList) <- c("expr_annot", "sample_annotations", "expr")
 
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays=list(rna = mtx_collapsed),
+    rowData=expr_annot,
+    colData=list(
+        sampleid = colnames(mtx_collapsed),
+        batchid = rep(NA, length(colnames(mtx_collapsed)))),
+    metadata=metadata
+    )
 
-# make output directory if it doesnt exist
-dir.create(dirname(OUTPUT[[1]]), recursive = TRUE, showWarnings = FALSE)
-qs::qsave(outputList, OUTPUT[[1]], nthreads = THREADS)
+data.table::fwrite(expr, OUTPUT$microarray_expr, sep="\t", quote=FALSE)
+saveRDS(se, OUTPUT$microarray_SE)
+jsonlite::write_json(metadata, OUTPUT$microarray_metadata)

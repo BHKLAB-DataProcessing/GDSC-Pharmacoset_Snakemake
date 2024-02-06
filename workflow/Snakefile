@@ -26,7 +26,8 @@ rule build_Pharmacoset:
             rules.make_RNASEQ_SE.output.rse_list,
             rules.make_CNV_SE.output.rse_list,
             rules.make_MUTATION_SE.output.rse_list,
-            rules.make_FUSION_SE.output.rse_list
+            rules.make_FUSION_SE.output.rse_list,
+            rules.make_MICROARRAY_SE.output.microarray_SE,
 ],
     output:
         results / "data/pharmacoset.RDS",

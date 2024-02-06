@@ -17,7 +17,9 @@ scripts = Path("../scripts")
 
 HTTP = HTTPRemoteProvider()
 
-conda_env = "../envs/microarray.yaml"
+# NEED TO USE CONTAINER INSTEAD
+# conda_env = "../envs/microarray.yaml"
+microarray_container = "docker://jjjermiah/gdsc_microarray:0.2"
 
 ################################################################################
 ## MICROARRAY 
@@ -86,11 +88,13 @@ rule make_MICROARRAY_SE:
         CEL_metadata = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
         CEL_FileList = rawdata / "microarray/E-MTAB-3610_expressionFiles.json",
     output:
-        microarray_SE = procdata / "microarray/microarray_SE.qs",
+        microarray_SE = procdata / "microarray/microarray_SE.RDS",
+        microarray_expr = procdata / "microarray/microarray_expr.tsv",
+        microarray_metadata = metadata / "microarray/microarray_metadata.json",
     log: 
         logs / "microarray" / "microarray_SE.log"
-    conda: 
-        conda_env
+    container: 
+        microarray_container
     threads:
         4
     script:
