@@ -52,16 +52,10 @@ summarizedExperimentLists <- unlist(lapply(INPUT$summarizedExperimentLists, read
 print(paste("Loading: ", INPUT$treatmentResponseExperiment, sep = "\n\t"))
 tre <- readRDS(INPUT$treatmentResponseExperiment)
 
-# treatment <- treatment[(DRUG_NAME %in% rowData(tre)$DRUG_NAME) & !duplicated(treatment$DRUG_NAME), ]
-# treatment <- data.frame(treatment, row.names = treatment$DRUG_NAME)
-
 # 1.0 Build MultiAssayExperiment
 # ------------------------------
 # Extract unique sample IDs from the summarized experiments
-# sampleids_all <- lapply(se_list, colnames)
-
 stopifnot(all(sapply(summarizedExperimentLists, function(x){
-   
     # make sure colnames of each SE is in sampleMetadat$GDSC.sampleid
     all(colnames(x) %in% sampleMetadata$GDSC.sampleid)
 })))
@@ -83,6 +77,13 @@ sample <- data.frame(sample, row.names = sample$GDSC.sampleid)
 sample <- sample[order(rownames(sample)), ]
 
 print(sprintf("Total number of samples across all experiments: %d", nrow(sample)))
+
+
+treatment <- treatmentMetadata[!duplicated(treatmentMetadata$GDSC.treatmentid), ]
+treatment <- data.frame(treatment, row.names = treatment$GDSC.treatmentid)
+treatment <- treatment[order(rownames(treatment)), ]
+print(sprintf("Total number of treatments: %d", nrow(treatment)))
+
 
 # Create a data frame for the column data, including sample IDs and batch IDs
 colData <- data.frame(
@@ -120,10 +121,10 @@ mae <- MultiAssayExperiment::MultiAssayExperiment(
 print(paste("MultiAssayExperiment:\n", capture.output(show(mae)), sep = ""))
 
 
-PSetName <- "GDSC"
+
 pset <- PharmacoGx::PharmacoSet2(
-    name = "GDSC",
-    treatment = treatmentMetadata,
+    name = paste(snakemake@config[c("GDSC_version","GDSC_release")], collapse = "v"),
+    treatment = treatment,
     sample = sample,
     molecularProfiles = mae,
     treatmentResponse = tre,

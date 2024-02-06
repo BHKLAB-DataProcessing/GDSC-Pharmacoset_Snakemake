@@ -40,7 +40,8 @@ if(exists("snakemake")){
 
 # exit
 celDirectory <- INPUT$CELfiles
-sample_annotations <- INPUT$CEL_metadata
+sample_annotations <- INPUT$CEL_metadata # provided by MTAB
+sampleMetadata <- data.table::fread(INPUT$sampleMetadata, sep= "\t", header=TRUE)
 
 # ----------------------------- MICROARRAY DATA ----------------------------- ##
 # Get a list of all the .cel files in the rawdata expression directory
@@ -50,7 +51,7 @@ sample_annotations <- INPUT$CEL_metadata
 
 # fileList <- list.files(celDirectory, pattern = ".cel", full.names = TRUE)
 message("Reading in the .cel files and performing RMA normalization")
-affyFiles <- affy::read.affybatch(celDirectory[1:20])
+affyFiles <- affy::read.affybatch(celDirectory)
 
 eSet <- affy::rma(affyFiles)
 mtx <- affy::exprs(eSet)                            
@@ -121,19 +122,23 @@ metadata <- list(
     sessionInfo = capture.output(sessionInfo()))
 
 
-
 # ----------------------------- OUTPUT ----------------------------- ##
 # combined expr_annot and sample_annotations and mtx into a list of 3 items
 
 se <- SummarizedExperiment::SummarizedExperiment(
-    assays=list(rna = mtx_collapsed),
+    assays=list(exprs = mtx_collapsed),
     rowData=expr_annot,
     colData=list(
         sampleid = colnames(mtx_collapsed),
         batchid = rep(NA, length(colnames(mtx_collapsed)))),
     metadata=metadata
-    )
+)
+
+
+# SUBSET SUMMARIZED EXPERIMENT TO ONLY HAVE GDSC SAMPLES
+# ------------------------------------------------------
+se <- se[,colnames(se) %in% sampleMetadata$GDSC.Sample_Name]
 
 data.table::fwrite(expr, OUTPUT$microarray_expr, sep="\t", quote=FALSE)
-saveRDS(se, OUTPUT$microarray_SE)
+saveRDS(list(rna = se), OUTPUT$microarray_SE)
 jsonlite::write_json(metadata, OUTPUT$microarray_metadata)

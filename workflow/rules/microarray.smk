@@ -67,7 +67,7 @@ checkpoint load_MicroArrayMetadata:
 
 
 # input function to get the files from the FTP server and save them locally
-def getMicroArrayFiles(wildcards):
+def getMicroArrayFiles(wildcards
     basepath = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/"
     
     with checkpoints.load_MicroArrayMetadata.get().output[0].open() as f:
@@ -87,8 +87,9 @@ rule make_MICROARRAY_SE:
         CELfiles = getMicroArrayFiles,
         CEL_metadata = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
         CEL_FileList = rawdata / "microarray/E-MTAB-3610_expressionFiles.json",
+        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
     output:
-        microarray_SE = procdata / "microarray/microarray_SE.RDS",
+        microarray_SE = results / "data" / "microarray/microarray_SE.RDS",
         microarray_expr = procdata / "microarray/microarray_expr.tsv",
         microarray_metadata = metadata / "microarray/microarray_metadata.json",
     log: 
