@@ -1,9 +1,11 @@
 from pathlib import Path
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+import json
+
 HTTP = HTTPRemoteProvider()
 
 configfile: "workflow/config/pipeline.yaml"
-conda_env = "../envs/metadata.yaml"
+
 
 rawdata = Path(config["directories"]["rawdata"])
 procdata = Path(config["directories"]["procdata"])
@@ -15,6 +17,7 @@ scripts = Path("../scripts")
 
 HTTP = HTTPRemoteProvider()
 
+conda_env = "../envs/microarray.yaml"
 
 ################################################################################
 ## MICROARRAY 
@@ -22,16 +25,16 @@ HTTP = HTTPRemoteProvider()
 # think of a better solution to download the data. 
 rule download_MicroArrayMetadata:
     input:
-        srdf = HTTP.remote(molecularProfiles['microarray']['metadata_srdf']['url']),
-        fileList = HTTP.remote(molecularProfiles['microarray']['metadata_json']['url']),
-        tsv = HTTP.remote(molecularProfiles['microarray']['metadata_tsv']['url'])
+        srdf = HTTP.remote(config["molecularProfiles"]['microarray']['metadata_srdf']['url']),
+        fileList = HTTP.remote(config["molecularProfiles"]['microarray']['metadata_json']['url']),
+        # tsv = HTTP.remote(config["molecularProfiles"]['microarray']['metadata_tsv']['url'])
     output:
         srdf = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
         filelist = rawdata / "microarray/E-MTAB-3610_filelist.json",
-        tsv = rawdata / "microarray/E-MTAB-3610.tsv",
+        # tsv = rawdata / "microarray/E-MTAB-3610.tsv",
     shell:
         """
-        mv {input.srdf} {output.srdf} && mv {input.fileList} {output.filelist} && mv {input.tsv} {output.tsv}
+        mv {input.srdf} {output.srdf} && mv {input.fileList} {output.filelist}
         """
 
 # This checkpoint rule is used to parse the metadata file and save it as a json file
@@ -75,26 +78,34 @@ def getMicroArrayFiles(wildcards):
     ftpFilePaths = [basepath + arrayFiles[sample]['filename'] for sample in files]
 
     # return HTTP.remote(ftpFilePaths)
-    return [rawdata / "microarray/" + arrayFiles[sample]['filename'] for sample in files]
+    return [rawdata / "microarray" / arrayFiles[sample]['filename'] for sample in files]
 
-rule preprocess_MicroArray:
+rule make_MICROARRAY_SE:
     input: 
         CELfiles = getMicroArrayFiles,
         CEL_metadata = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
         CEL_FileList = rawdata / "microarray/E-MTAB-3610_expressionFiles.json",
     output:
-        preprocessedMicroArray = procdata / "microarray/preprocessedMicroArray.qs",
+        microarray_SE = procdata / "microarray/microarray_SE.qs",
+    log: 
+        logs / "microarray" / "microarray_SE.log"
+    conda: 
+        conda_env
     threads:
         4
     script:
-        scripts / "microarray/preprocess_MICROARRAY.R"
+        scripts / "microarray" / "make_MICROARRAY_SE.R"
 
+# This rule is primarily to parallelize the download of the ~1018 .CEL files.
+# It would be called by the preprocess_MicroArray rule when the input Function getMicroArrayFiles returns a list
+# of files that it needs at the rawdata / "microarray" directory.
+# the sample wildcard is then used to construct the FTP path to the file and download it using wget
 rule download_MicroArrayFILE: 
     output:
-        rawdata / "microarray/{sample}.cel"
+        rawdata / "microarray" / "{sample}.cel"
     log:
-        logs / "microarray/Download_{sample}.log"
-    retries: 5
+        logs / "microarray" / "Download_{sample}.log"
+    retries: 5 # Sometimes it randomly fails to download a file
     shell:
         """
         ftpFilePath="https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files"

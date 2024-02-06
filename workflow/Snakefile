@@ -11,6 +11,7 @@ release = config["GDSC_release"]
 include: "rules/metadata.smk"
 include: "rules/treatmentResponse.smk"
 include: "rules/rnaseq.smk"
+include: "rules/microarray.smk"
 include: "rules/cnv.smk"
 include: "rules/mutation.smk"
 include: "rules/fusion.smk"
