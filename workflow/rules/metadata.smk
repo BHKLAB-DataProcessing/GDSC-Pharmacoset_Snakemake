@@ -145,7 +145,7 @@ rule map_treatments_to_PubChemCID:
         treatment_CIDS = procdata / metadata / "annotation" / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
     log: logs / metadata / "{version}_{release}_map_treatments_to_PubChemCID.log"
     threads:
-        30
+        8
     container: 
         annotationGx_docker
     script:
@@ -158,7 +158,7 @@ rule annotate_PubChemCIDS:
         annotated_CIDs = procdata / metadata / "annotation" / "{version}_{release}_CIDS_{annotationType}.tsv",
     log: logs / metadata / "{version}_{release}_CIDS_{annotationType}.log"
     threads:
-        30
+        8
     container: 
         annotationGx_docker
     script:
@@ -171,7 +171,7 @@ rule annotate_ChEMBL:
         annotated_ChEMBL = procdata / metadata / "annotation" / "{version}_{release}_ChEMBL_annotated.tsv",
     log: logs / metadata / "{version}_{release}_ChEMBL_annotated.log"
     threads:
-        30
+        8
     container: 
         annotationGx_docker
     script:

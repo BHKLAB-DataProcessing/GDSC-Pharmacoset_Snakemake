@@ -17,7 +17,7 @@ if(exists("snakemake")){
 sampleMetadata <- data.table::fread(INPUT[['sampleMetadata']], sep="\t", header=T)
 cellosaurus_object <- INPUT[['cellosaurus_object']]
 object <- readRDS(cellosaurus_object)
-
+# /home/bioinf/bhklab/jermiah/repos/GDSC-Pharmacoset_Snakemake/metadata/cellosaurus.RDS
 gdsc_mapped <- data.table::as.data.table(Cellosaurus::mapCells(object, unique(sampleMetadata[,GDSC.sampleid])),keep.rownames = T)
 gdsc_mapped
 
