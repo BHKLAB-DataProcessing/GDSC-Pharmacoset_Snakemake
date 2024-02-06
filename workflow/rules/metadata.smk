@@ -21,14 +21,11 @@ cellosaurus_docker = "docker://quay.io/biocontainers/r-cellosaurus:0.8.1--r43hdf
 
 rule preprocess_metadata:
     input:
-        treatmentMetadata = expand(
-            procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv", 
-            version = version, release = release),
         treatmentMetadata_annot = expand(
             procdata / metadata / "{version}_{release}_treatmentMetadata_annotated.tsv",
             version = version, release = release),
-        sampleMetadata = expand(
-            procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv", 
+        sampleMetadata_annot = expand(
+            procdata / metadata / "{version}_{release}_sampleMetadata_mappedCellosaurus.tsv", 
             version = version, release = release),
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
 
@@ -148,7 +145,7 @@ rule map_treatments_to_PubChemCID:
         treatment_CIDS = procdata / metadata / "annotation" / "{version}_{release}_treatmentMetadata_MappedCIDS.tsv",
     log: logs / metadata / "{version}_{release}_map_treatments_to_PubChemCID.log"
     threads:
-        24
+        30
     container: 
         annotationGx_docker
     script:
@@ -161,7 +158,7 @@ rule annotate_PubChemCIDS:
         annotated_CIDs = procdata / metadata / "annotation" / "{version}_{release}_CIDS_{annotationType}.tsv",
     log: logs / metadata / "{version}_{release}_CIDS_{annotationType}.log"
     threads:
-        4
+        30
     container: 
         annotationGx_docker
     script:
@@ -174,7 +171,7 @@ rule annotate_ChEMBL:
         annotated_ChEMBL = procdata / metadata / "annotation" / "{version}_{release}_ChEMBL_annotated.tsv",
     log: logs / metadata / "{version}_{release}_ChEMBL_annotated.log"
     threads:
-        4
+        30
     container: 
         annotationGx_docker
     script:

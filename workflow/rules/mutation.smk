@@ -30,7 +30,7 @@ rule download_MUTATION_processed:
     shell:
         """
         mv {input.all_mutations} {output.all_mutations} && \
-        mv {input.Genes_Metadata} {output.Genes_Metadata} > {log} 2>&1
+        mv {input.mutation_genes} {output.mutation_genes} > {log} 2>&1
         """
 
 rule make_MUTATION_SE:
