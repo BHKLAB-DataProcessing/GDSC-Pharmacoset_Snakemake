@@ -16,21 +16,32 @@ include: "rules/cnv.smk"
 include: "rules/mutation.smk"
 include: "rules/fusion.smk"
 
+
+rule get_Pharmacoset:
+    input:
+        expand(
+            results / "data" / "{version}_{release}_Pharmacoset.RDS",
+            version = version,
+            release = release       
+        )
+
 rule build_Pharmacoset:
     input:
-        treatmentResponseExperiment = procdata / f"treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.RDS",
-        annotated_treatmentMetadata = procdata / metadata / f"{version}_{release}_treatmentMetadata_annotated.tsv",
-        annotated_sampleMetadata = procdata / metadata / f"{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        treatmentResponseExperiment = results / "data" / "{version}_{release}_treatmentResponseExperiment.RDS",
+        annotated_treatmentMetadata = results / "data"  / "{version}_{release}_treatmentMetadata_annotated.tsv",
+        annotated_sampleMetadata = results / "data"  / "{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
         summarizedExperimentLists = [
+            rules.make_MICROARRAY_SE.output.microarray_SE,
             rules.make_RNASEQ_SE.output.rse_list,
             rules.make_CNV_SE.output.rse_list,
             rules.make_MUTATION_SE.output.rse_list,
             rules.make_FUSION_SE.output.rse_list,
-            rules.make_MICROARRAY_SE.output.microarray_SE,
-],
+    ],
     output:
-        results / "data/pharmacoset.RDS",
+        results / "data" / "{version}_{release}_Pharmacoset.RDS",
+    log:
+        logs / "{version}_{release}_build_Pharmacoset.log",
     conda: "envs/snakemake.yaml"
     script:
         "scripts/build_PharmacoSet.R"

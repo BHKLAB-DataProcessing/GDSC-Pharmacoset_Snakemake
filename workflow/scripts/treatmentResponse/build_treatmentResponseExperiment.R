@@ -135,6 +135,18 @@ published_profiles <- procData[
 
 CoreGx::assay(gdsc_tre, "profiles_published") <- published_profiles
 
+# ADD METADATA
+# ------------ 
+metadata <- list(
+    data_source = snakemake@config$treatmentResponse[[WILDCARDS$release]][[WILDCARDS$version]],
+    filename = list(
+        raw = basename(INPUT$rawdata),
+        processed = basename(INPUT$processed)
+    ),
+    date = Sys.Date(),
+    sessionInfo = sessionInfo()
+)
+
 ######
 # 4.0 Save output
 # ---------------

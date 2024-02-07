@@ -179,7 +179,7 @@ rule annotate_ChEMBL:
 
 
 PubChemAnnotations = ['ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code']
-rule annotated_TreatmentData:
+rule annotate_TreatmentData:
     input:
         annotated_CIDS = expand(
             procdata / metadata / "annotation" / "{version}_{release}_CIDS_{annotationType}.tsv",
@@ -187,7 +187,7 @@ rule annotated_TreatmentData:
         annotated_ChEMBL = procdata / metadata / "annotation" / "{version}_{release}_ChEMBL_annotated.tsv",
         treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
     output:
-        annotated_treatmentMetadata = procdata / metadata / "{version}_{release}_treatmentMetadata_annotated.tsv",
+        annotated_treatmentMetadata = results / "data" / "{version}_{release}_treatmentMetadata_annotated.tsv",
     log: logs / metadata / "{version}_{release}_treatmentMetadata_annotated.log"
     container: 
         annotationGx_docker
@@ -203,12 +203,12 @@ rule getCellosaurusObject:
     script:
         scripts / metadata / "getCellosaurus/getCellosaurusObject.R"
 
-rule mapSampleNamesToCellosaurusAccessionID:
+rule annotate_SampleMetadata:
     input:
         sampleMetadata = procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv",
         cellosaurus_object = "metadata/cellosaurus.RDS", 
     output:
-        sample_Cellosaurus_file = procdata / metadata / "{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        sample_Cellosaurus_file = results / "data" / "{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
     container: 
         cellosaurus_docker
     script:

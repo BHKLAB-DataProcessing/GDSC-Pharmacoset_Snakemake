@@ -71,7 +71,11 @@ colnames(mtx) <- sampleMetadata$GDSC.sampleid[matched_names]
 
 metadata <- list(
     data_source = snakemake@config$molecularProfiles$fusion,
-    filename = INPUT$gene_fusions
+    filename = basename(INPUT$gene_fusions),
+    annotation = "fusion",
+    samples = ncol(mtx),
+    date = Sys.Date(),
+    sessionInfo = capture.output(sessionInfo())
 )
 
 

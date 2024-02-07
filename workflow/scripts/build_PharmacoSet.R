@@ -55,11 +55,27 @@ tre <- readRDS(INPUT$treatmentResponseExperiment)
 # 1.0 Build MultiAssayExperiment
 # ------------------------------
 # Extract unique sample IDs from the summarized experiments
-stopifnot(all(sapply(summarizedExperimentLists, function(x){
+
+se_list <- sapply(summarizedExperimentLists, function(x){
+    if(!all(colnames(x) %in% sampleMetadata$GDSC.sampleid)){
+        print("Not all colnames of the summarized experiment are in the sample metadata")
+        new_x <- x[, colnames(x) %in% sampleMetadata$GDSC.sampleid]
+
+        # remove duplicated columns
+        new_x <- new_x[, !duplicated(colnames(new_x))]
+    
+        return(new_x)
+    }
+    else{
+        new_x <- x[, !duplicated(colnames(x))]
+        return(new_x)
+    }
+})
+stopifnot(all(sapply(se_list, function(x){
     # make sure colnames of each SE is in sampleMetadat$GDSC.sampleid
     all(colnames(x) %in% sampleMetadata$GDSC.sampleid)
 })))
-
+summarizedExperimentLists <- se_list
 summarizedExperimentLists <- sapply(summarizedExperimentLists, function(x){
     x@colData <- DataFrame(
         sampleid = colnames(x),

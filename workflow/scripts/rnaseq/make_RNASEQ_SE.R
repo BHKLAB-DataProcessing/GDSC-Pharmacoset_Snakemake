@@ -81,7 +81,12 @@ dataset_types <- c("fpkm", "read_count", "tpm")
 metadata <- lapply(dataset_types, function(x) {
     list(
         data_source = snakemake@config$molecularProfiles$rnaseq,
-        filename = unique(rnaseq_data[[x]][["file"]]))})
+        filename = basename(unique(rnaseq_data[[x]][["file"]])),
+        annotation = "rnaseq",
+        datatype = x,
+        date = Sys.Date(),
+        sessionInfo = capture.output(sessionInfo())    
+)})
 names(metadata) <- dataset_types
 
 # 1.0 Subset rnaseq data to only include samples from GDSC metadata
@@ -136,6 +141,7 @@ rse_list <- BiocParallel::bplapply(
             geneAnnot[CMP.GENE_ID %in% matched_genes$CMP.GENE_ID], 
             keep.extra.columns = TRUE)
 
+        metadata[[x]]$numSamples <- ncol(mtx)
         rse <- SummarizedExperiment::SummarizedExperiment(
             assays = list(exprs = mtx),
             rowRanges = rowRanges,

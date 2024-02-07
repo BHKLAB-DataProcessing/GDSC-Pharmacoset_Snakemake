@@ -39,7 +39,7 @@ rule make_RNASEQ_SE:
         fpkm = procdata / "rnaseq" / "rnaseq_fpkm.tsv",
         read_count = procdata / "rnaseq" / "rnaseq_read_count.tsv",
         metadata = procdata / "rnaseq" / "rnaseq_metadata.json",
-        rse_list = procdata / "rnaseq" / "rnaseq_rse_list.RDS"
+        rse_list = results / "rnaseq" / "rnaseq_rse_list.RDS"
     log:
         logs / "rnaseq/preprocess_RNASEQ.log"
     conda:

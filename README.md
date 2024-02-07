@@ -69,6 +69,8 @@ conda install mamba -n base -c conda-forge
 ```
 
 Create a conda environment with the required dependencies:
+> [!NOTE] 
+> This pipeline uses `snakemake=7.32.4`. It is highly recommended to build the environment using the provided `snakemake.yaml` file.
 
 ```bash
 mamba env create -f GDSC-Pharmacoset_Snakemake/workflow/envs/snakemake.yaml
@@ -84,7 +86,24 @@ conda activate gdsc_pharmacoset
 ## Workflow Execution:
 
 ### Main Run
-```bash
+> [!NOTE]
+> The following command was tested on a linux machine, with 30 cores and 128GB of RAM.
+> The pipeline can be run on a machine with less resources, but it will take longer to complete.
+> To modify the number of cores used, change the `--cores` flag to the desired number.
+
+``` bash
+snakemake --snakefile workflow/Snakefile \
+    --cores 30 \
+    --show-failed-logs \
+    --keep-going \
+    --rerun-incomplete \
+    --printshellcmds \
+    --use-conda \
+    --use-singularity
+```
+
+
+``` bash
 snakemake --profile workflow/profiles/
 ```
 
@@ -94,6 +113,10 @@ snakemake --profile workflow/profiles/ --dryrun
 ```
 
 ### Create all Conda Environments
+> [!TIP] 
+> Creating each conda environment can take a long time when running the entire pipeline. 
+> To create all conda environments without running the pipeline, use the `--conda-create-envs-only` flag.
+
 ```bash
 snakemake --profile workflow/profiles/ --use-conda --conda-create-envs-only
 ```

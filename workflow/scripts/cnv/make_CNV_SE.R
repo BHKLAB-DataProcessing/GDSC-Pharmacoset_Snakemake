@@ -122,13 +122,7 @@ dt <- wes_gene_dt[, ..cols, with = FALSE]
 source_ <- "Sanger"
 assay_dt <- dt[source == source_, !c("source"), with = FALSE]
 
-metadata <- list(
-    data_source = snakemake@config$molecularProfiles$cnv,
-    filename = basename(gene_files),
-    annotation = "cnv", 
-    date_created = Sys.time(),
-    sessionInfo = capture.output(sessionInfo()))
-jsonlite::write_json(metadata, OUTPUT$metadata)
+
 # for each column that isnt GDSC.sampleid or symbol, create a matrix with genes rows
 # and samples as columns and set the rownames to the gene_id
 # the `dcast` function to reshape the data from 
@@ -165,8 +159,7 @@ rse_list <- BiocParallel::bplapply(
         print(paste("Creating SummarizedExperiment for ", col))
         rse <- SummarizedExperiment::SummarizedExperiment(
             assays = list(exprs = mtx),
-            rowRanges = rowRanges,
-            metadata = metadata)
+            rowRanges = rowRanges)
         
         print(paste("Writing ", col, " to ", OUTPUT[[col]]))
         write.table(
@@ -183,6 +176,23 @@ rse_list <- BiocParallel::bplapply(
 )
 names(rse_list) <- paste0("cnv.", assayNames)
 
+# Get numSamples in each matrix
+numSamples <- max(sapply(rse_list, function(x) ncol(SummarizedExperiment::assay(x))))
+
+
+metadata <- list(
+    data_source = snakemake@config$molecularProfiles$cnv,
+    filename = basename(gene_files),
+    annotation = "cnv", 
+    samples = numSamples,
+    date_created = Sys.time(),
+    sessionInfo = capture.output(sessionInfo()))
+
+# For each rse, add the metadata
+for (i in seq_along(rse_list)){
+    rse_list[[i]]@metadata <- metadata
+}
+
 # Each matrix should have the same number of rows and columns
 # check that the number of rows and columns are the same for each matrix
 
@@ -192,5 +202,7 @@ print("Saving Output Files")
 
 # make output directory if it doesnt exist
 dir.create(dirname(OUTPUT$rse_list), recursive = TRUE, showWarnings = FALSE)
+jsonlite::write_json(metadata, OUTPUT$metadata)
+
 saveRDS(rse_list, file = OUTPUT$rse_list)
 

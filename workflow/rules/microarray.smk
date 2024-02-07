@@ -67,7 +67,7 @@ checkpoint load_MicroArrayMetadata:
 
 
 # input function to get the files from the FTP server and save them locally
-def getMicroArrayFiles(wildcards
+def getMicroArrayFiles(wildcards):
     basepath = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/"
     
     with checkpoints.load_MicroArrayMetadata.get().output[0].open() as f:
@@ -89,9 +89,9 @@ rule make_MICROARRAY_SE:
         CEL_FileList = rawdata / "microarray/E-MTAB-3610_expressionFiles.json",
         sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
     output:
-        microarray_SE = results / "data" / "microarray/microarray_SE.RDS",
+        microarray_SE = results / "data/microarray/microarray_SE.RDS",
         microarray_expr = procdata / "microarray/microarray_expr.tsv",
-        microarray_metadata = metadata / "microarray/microarray_metadata.json",
+        metadata = procdata / "microarray/microarray_metadata.json",
     log: 
         logs / "microarray" / "microarray_SE.log"
     container: 
@@ -105,11 +105,11 @@ rule make_MICROARRAY_SE:
 # It would be called by the preprocess_MicroArray rule when the input Function getMicroArrayFiles returns a list
 # of files that it needs at the rawdata / "microarray" directory.
 # the sample wildcard is then used to construct the FTP path to the file and download it using wget
-rule download_MicroArrayFILE: 
+rule download_MicroArrayCEL: 
     output:
         rawdata / "microarray" / "{sample}.cel"
     log:
-        logs / "microarray" / "Download_{sample}.log"
+        logs / "microarray" / "download_MicroArrayCEL" / "Download_{sample}.log"
     retries: 5 # Sometimes it randomly fails to download a file
     shell:
         """

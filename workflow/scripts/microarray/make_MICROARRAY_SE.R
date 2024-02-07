@@ -108,6 +108,7 @@ colnames(mtx_collapsed) <- sample_annotations$`Characteristics[cell line]`
 
 expr <- data.table::as.data.table(mtx_collapsed, keep.rownames = "gene.symbol")
 
+
 # subset gene_annotations on SYMBOL with the values in expr$gene.symbol
 # only keep the rows in gene_annotations that have a match in expr
 data.table::setkey(gene_annotations, SYMBOL)
@@ -116,10 +117,12 @@ expr_annot <- unique(gene_annotations[expr$gene.symbol, .(SYMBOL, GENENAME, ENSE
 
 metadata <- list(
     data_source = snakemake@config$molecularProfiles$microarray,
-    CEL_files = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files",
-    annotation = "microarray", 
-    date_created = Sys.time(),
-    sessionInfo = capture.output(sessionInfo()))
+    filename = "1019 files from https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files",
+    annotation = "rna", 
+    samples = ncol(mtx_collapsed),
+    date_created = Sys.Date(),
+    sessionInfo = capture.output(sessionInfo())
+)
 
 
 # ----------------------------- OUTPUT ----------------------------- ##
@@ -141,4 +144,4 @@ se <- se[,colnames(se) %in% sampleMetadata$GDSC.Sample_Name]
 
 data.table::fwrite(expr, OUTPUT$microarray_expr, sep="\t", quote=FALSE)
 saveRDS(list(rna = se), OUTPUT$microarray_SE)
-jsonlite::write_json(metadata, OUTPUT$microarray_metadata)
+jsonlite::write_json(metadata, OUTPUT$metadata)

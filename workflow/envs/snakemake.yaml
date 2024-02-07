@@ -1,4 +1,4 @@
-name: gdsc_pharmacoset
+name: gdsc
 channels:
   - conda-forge
   - bioconda

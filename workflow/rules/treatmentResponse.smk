@@ -47,7 +47,7 @@ rule build_treatmentResponseExperiment:
         treatmentMetadata = procdata / metadata / "{version}_{release}_preprocessed_treatmentMetadata.tsv",
         sampleMetadata = procdata / metadata / "{version}_{release}_preprocessed_sampleMetadata.tsv", 
     output:
-        tre = "procdata/treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.RDS",
+        tre = results / "data/{version}_{release}_treatmentResponseExperiment.RDS",
         raw = procdata / "treatmentResponse/{version}_{release}_treatmentResponse_raw.tsv",
         published_profiles = procdata / "treatmentResponse/{version}_{release}_treatmentResponse_published_profiles.tsv",
     log:

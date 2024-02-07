@@ -104,21 +104,28 @@ matrices <- BiocParallel::bplapply(assay_cols, function(x){
     BPPARAM = BiocParallel::MulticoreParam(workers = THREADS))
 names(matrices) <- assay_cols
 
-
-
+# Num samples in each matrix
+numSamples <- max(sapply(matrices, ncol))
 
 # 4.0 Setup metadata for SummarizedExperiment object
 # --------------------------------------------------
 metadata <- list(
     data_source = snakemake@config$molecularProfiles$mutation$SUMMARY,
-    filename.data = INPUT$all_mutations,
-    filename.gene_metadata = INPUT$mutation_genes)
+    filename = list(
+        data = basename(INPUT$all_mutations),
+        mutation_genes = basename(INPUT$mutation_genes)),
+    annotation = "mutation",
+    samples = numSamples,
+    date_created = Sys.Date(),
+    sessionInfo = capture.output(sessionInfo())
+)
 
-geneAnnot 
 
 print("Creating SummarizedExperiment objects")
 
-rse_list <- lapply(matrices, function(x) {
+rse_list <- lapply(names(matrices), function(matrix_name){
+
+    x <- matrices[[matrix_name]]
     # subset geneAnnot
     assay <- x[rownames(x) %in% geneAnnot$gene_name,]
     geneAnnot_sub <- unique(geneAnnot[gene_name %in% rownames(assay)], by = "gene_name")
@@ -134,6 +141,8 @@ rse_list <- lapply(matrices, function(x) {
         sampleid = colnames(assay),
         batchid = rep(NA, ncol(assay))
     )
+
+    metadata$datatype = matrix_name
 
     # create SummarizedExperiment object
     rse <- SummarizedExperiment::SummarizedExperiment(
