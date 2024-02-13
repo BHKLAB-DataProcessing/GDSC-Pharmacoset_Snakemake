@@ -32,7 +32,7 @@ rule download_FUSION:
 rule make_FUSION_SE:
     input:
         gene_fusions = rules.download_FUSION.output.gene_fusions,
-        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        sampleMetadata = procdata / metadata / f"GDSC_{release}_preprocessed_sampleMetadata.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
     output:
         rse_list = results / "data/fusion/fusion_rse_list.RDS",

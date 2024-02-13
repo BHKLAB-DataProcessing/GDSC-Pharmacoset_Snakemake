@@ -5,12 +5,13 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-
+    save.image("build_treatmentResponseExperiment.RData")
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
-
 }
+
+
 
 # 0.1 Startup 
 # -----------
@@ -44,7 +45,7 @@ subsetted_rawdata <- rawdata_st[(!is.na(DRUG_ID) & !is.na(GDSC.treatmentid)) |
 ## ------------------- GDSC SPECIFIC STEP ------------------- ##
 # In the essence of using the processed GDSC data as much as possible
 # we will normalize the rawdata using the gdscIC50 package
-neg_control_TAGS <- subsetted_rawdata[grepl("^NC", TAG), unique(TAG)]
+# neg_control_TAGS <- subsetted_rawdata[grepl("^NC", TAG), unique(TAG)]
 # if(length(neg_control_TAGS) > 1){
 #     print(paste0("More than one negative control found: ", paste0(neg_control_TAGS, collapse = ", ")))
 #     print(paste0("Setting all negative controls to: ", neg_control_TAGS[1]))
@@ -91,7 +92,11 @@ normData <- merge(normData, unique(subsetted_rawdata[, .(MASTER_CELL_ID, GDSC.sa
 normData <- merge(normData, unique(subsetted_rawdata[, .(DRUG_ID, GDSC.treatmentid)]), by.x = "DRUG_ID_lib", by.y = "DRUG_ID", all.x = T)
 
 
-assay <- normData[!(is.na(GDSC.sampleid)), .(GDSC.sampleid, GDSC.treatmentid, Dose = CONC, Viability = normalized_intensity, BARCODE)]
+assay <- normData[
+    !(is.na(GDSC.sampleid)), 
+    .(GDSC.sampleid, GDSC.treatmentid, Dose = CONC, Viability = normalized_intensity, BARCODE)]
+
+
 assay[!is.na(GDSC.treatmentid), .N, by=.(GDSC.sampleid, GDSC.treatmentid)][order(-N)]$GDSC.treatmentid |> unique() -> drug_exp_count
 
 print(paste0("Merging treatmentMetadata with processed data"))
@@ -109,29 +114,36 @@ subset_normData <- unique(assay[
     !is.na(GDSC.sampleid)])
 
 
+# CoreGx Functions require that the main terminology is "treatmentid" and "sampleid"
+# we will add these columns to the subset_normData
+
+subset_normData[, 'treatmentid' := GDSC.treatmentid]
+subset_normData[, 'sampleid' := GDSC.sampleid]
+
+
 
 print("Constructing tre")
 TREDataMapper <- CoreGx::TREDataMapper(rawdata=subset_normData)
 CoreGx::rowDataMap(TREDataMapper) <- list(
-    id_columns = (c("GDSC.treatmentid", "Dose")),
+    id_columns = (c("treatmentid", "Dose")),
     mapped_columns = c())
 
 CoreGx::colDataMap(TREDataMapper) <- list(
-    id_columns = c("GDSC.sampleid"),
+    id_columns = c("sampleid", "BARCODE"),
     mapped_columns = c())
 
 CoreGx::assayMap(TREDataMapper) <- list(
-    raw = list(
-        c("GDSC.treatmentid", "Dose", "GDSC.sampleid"),
+    sensitivity = list(
+        c("treatmentid", "BARCODE", "Dose", "sampleid"),
         c("Viability")))
 
 
 gdsc_tre <- CoreGx::metaConstruct(TREDataMapper)
 
 published_profiles <- procData[
-    GDSC.sampleid %in% gdsc_tre$raw$GDSC.sampleid & 
-    GDSC.treatmentid %in% gdsc_tre$raw$GDSC.treatmentid,
-    .(GDSC.sampleid, GDSC.treatmentid,  LN_IC50, AUC, RMSE, Z_SCORE)]
+    GDSC.sampleid %in% gdsc_tre$sensitivity$sampleid & 
+    GDSC.treatmentid %in% gdsc_tre$sensitivity$treatmentid,
+    .(sampleid = GDSC.sampleid, treatmentid = GDSC.treatmentid,  LN_IC50, AUC, RMSE, Z_SCORE)]
 
 CoreGx::assay(gdsc_tre, "profiles_published") <- published_profiles
 
@@ -140,20 +152,21 @@ CoreGx::assay(gdsc_tre, "profiles_published") <- published_profiles
 metadata <- list(
     data_source = snakemake@config$treatmentResponse[[WILDCARDS$release]][[WILDCARDS$version]],
     filename = list(
+        description = "The filename used in the pipeline to create this object. Likely renamed from the original file",
         raw = basename(INPUT$rawdata),
         processed = basename(INPUT$processed)
     ),
     date = Sys.Date(),
     sessionInfo = sessionInfo()
 )
-
+CoreGx::metadata(gdsc_tre) <- metadata
 ######
 # 4.0 Save output
 # ---------------
 dir.create(dirname(OUTPUT$raw), showWarnings = FALSE, recursive = TRUE)
 dir.create(dirname(OUTPUT$published_profiles), showWarnings = FALSE, recursive = TRUE)
 fwrite(subset_normData, OUTPUT$raw, sep = "\t", quote = F)
-fwrite(procData, OUTPUT$published_profiles, sep = "\t", quote = F)
+fwrite(published_profiles, OUTPUT$published_profiles, sep = "\t", quote = F)
 saveRDS(gdsc_tre, OUTPUT$tre)
 
 
@@ -168,7 +181,7 @@ saveRDS(gdsc_tre, OUTPUT$tre)
 
 # {
 # start <- Sys.time()
-# gdsc_tre_fit <- gdsc_tre2[drugs,] |>
+# gdsc_tre_fit <- gdsc_tre["erlotinib",]  |>
 #         CoreGx::endoaggregate(
 #             {  # the entire code block is evaluated for each group in our group by
 #                 # 1. fit a log logistic curve over the dose range
@@ -188,21 +201,25 @@ saveRDS(gdsc_tre, OUTPUT$tre)
 #                     # ic50_recomputed=ic50
 #                 )
 #             },
-#             assay="raw",
+#             assay="sensitivity",
 #             target="profiles_recomputed",
 #             enlist=FALSE,  # this option enables the use of a code block for aggregation
-#             by=c("GDSC.treatmentid", "GDSC.sampleid"),
+#             by=c("treatmentid", "sampleid"),
 #             nthread=28  # parallelize over multiple cores to speed up the computation
 #     )
-# gdsc_tre_fit
-# print(paste0("Time taken for ", length(drugs), " treatments: ", Sys.time() - start))
+# # gdsc_tre_fit
+# print(paste0("Time taken for ", Sys.time() - start))
 # }
 
+# Record the result of the computation and the time taken
+# create empty list to store results
 
-# test_tre <- function(n,m, tre=gdsc_tre){
+
+# results <- list()
+# test_tre <- function(n,m, tre=gdsc_tre, results = results){
 #     start <- Sys.time()
 #     print(paste0("Starting Time: ", format(start, "%H:%M:%S")))
-#     tre[ unique(tre@rowData$GDSC.treatmentid)[1:n], unique(tre@colData$GDSC.sampleid)[1:m]] |> CoreGx::endoaggregate(
+#     new_tre <- tre[ unique(tre@rowData$treatmentid)[1:n], unique(tre@colData$sampleid)[1:m]] |> CoreGx::endoaggregate(
 #             {  # the entire code block is evaluated for each group in our group by
 #                 # 1. fit a log logistic curve over the dose range
 #                 fit <- PharmacoGx::logLogisticRegression(Dose, Viability,
@@ -213,22 +230,34 @@ saveRDS(gdsc_tre, OUTPUT$tre)
 #                 # 3. assemble the results into a list, each item will become a
 #                 #   column in the target assay.
 #                 list(
-#                     HS=fit[["HS"]]
+#                     HS=fit[["HS"]],
+#                     E_inf = fit[["E_inf"]],
+#                     EC50 = fit[["EC50"]],
+#                     Rsq=as.numeric(unlist(attributes(fit))),
+#                     aac_recomputed=aac,
+#                     ic50_recomputed=ic50
 #                 )
 #             },
-#             assay="raw",
+#             assay="sensitivity",
 #             target="profiles_recomputed",
 #             enlist=FALSE,  # this option enables the use of a code block for aggregation
-#             by=c("GDSC.treatmentid", "GDSC.sampleid"),
-#             nthread=24  # parallelize over multiple cores to speed up the computation
+#             by=c("treatmentid", "sampleid"),
+#             nthread=30  # parallelize over multiple cores to speed up the computation
 #     )
-#     print(paste0("Time taken for ", n, " samples and ", m, " treatments: ", Sys.time() - start))
+#     elapsed <- Sys.time() - start
+#     print(paste0("Time taken for ", n, " samples and ", m, " treatments: ", elapsed))
+#     results[[paste0(n, "_", m)]] <- list(
+#         tre = new_tre,
+#         time = elapsed
+#     )
+#     return(results)
 # }
-
-# test_tre(10, 20)
-# test_tre(25, 25)
-# test_tre(50, 50)
-# test_tre(100, 100)
-# test_tre(200, 200)
-
+# max_n <- uniqueN(gdsc_tre@rowData$treatmentid)
+# max_m <- uniqueN(gdsc_tre@colData$sampleid)
+# # test_tre(10, 20)
+# results <- test_tre(25, 25, results = results)
+# results <- test_tre(50, 50, results = results)
+# results <- test_tre(100, 100, results = results)
+# results <- test_tre(200, 200, results = results)
+# results <- test_tre(max_n, max_m, results = results)
 # test_tre(length(tre@rowData$GDSC.treatmentid), length(tre@colData$GDSC.sampleid))

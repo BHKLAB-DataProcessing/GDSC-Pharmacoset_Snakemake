@@ -6,6 +6,7 @@ results
 logs/
 sandbox
 cog.sanger.ac.uk/
-.RData
+*.RData
 .RDataTmp
 .cache
+orcestradata/

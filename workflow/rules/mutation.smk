@@ -37,7 +37,7 @@ rule make_MUTATION_SE:
     input:
         all_mutations = rules.download_MUTATION_processed.output.all_mutations, 
         mutation_genes = rules.download_MUTATION_processed.output.mutation_genes,
-        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        sampleMetadata = procdata / metadata / f"GDSC_{release}_preprocessed_sampleMetadata.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
     output:
         rse_list = results / "data/mutation/mutation_rse_list.RDS",

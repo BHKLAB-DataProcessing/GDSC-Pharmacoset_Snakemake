@@ -32,14 +32,14 @@ rule download_RNASEQ:
 rule make_RNASEQ_SE:
     input:
         processed = rules.download_RNASEQ.output.processed,
-        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        sampleMetadata = procdata / metadata / f"GDSC_{release}_preprocessed_sampleMetadata.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
     output:
         tpm = procdata / "rnaseq" / "rnaseq_tpm.tsv",
         fpkm = procdata / "rnaseq" / "rnaseq_fpkm.tsv",
         read_count = procdata / "rnaseq" / "rnaseq_read_count.tsv",
         metadata = procdata / "rnaseq" / "rnaseq_metadata.json",
-        rse_list = results / "rnaseq" / "rnaseq_rse_list.RDS"
+        rse_list = results / "data"/ "rnaseq" / "rnaseq_rse_list.RDS"
     log:
         logs / "rnaseq/preprocess_RNASEQ.log"
     conda:

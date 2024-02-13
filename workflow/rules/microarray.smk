@@ -29,11 +29,9 @@ rule download_MicroArrayMetadata:
     input:
         srdf = HTTP.remote(config["molecularProfiles"]['microarray']['metadata_srdf']['url']),
         fileList = HTTP.remote(config["molecularProfiles"]['microarray']['metadata_json']['url']),
-        # tsv = HTTP.remote(config["molecularProfiles"]['microarray']['metadata_tsv']['url'])
     output:
         srdf = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
-        filelist = rawdata / "microarray/E-MTAB-3610_filelist.json",
-        # tsv = rawdata / "microarray/E-MTAB-3610.tsv",
+        filelist = rawdata / "microarray/metadata/E-MTAB-3610_filelist.json",
     shell:
         """
         mv {input.srdf} {output.srdf} && mv {input.fileList} {output.filelist}
@@ -43,9 +41,9 @@ rule download_MicroArrayMetadata:
 # The json file is used to download the expression data in downloadExpressionData
 checkpoint load_MicroArrayMetadata:
     input:
-        filelist = rawdata / "microarray/E-MTAB-3610_filelist.json",
+        filelist = rawdata / "microarray/metadata/E-MTAB-3610_filelist.json",
     output:
-        microarrayFiles = rawdata / "microarray/E-MTAB-3610_expressionFiles.json",
+        microarrayFiles = rawdata / "microarray/metadata/E-MTAB-3610_expressionFiles.json",
     run:
         import json
         with open(input.filelist) as f:
@@ -86,8 +84,8 @@ rule make_MICROARRAY_SE:
     input: 
         CELfiles = getMicroArrayFiles,
         CEL_metadata = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
-        CEL_FileList = rawdata / "microarray/E-MTAB-3610_expressionFiles.json",
-        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        CEL_FileList = rawdata / "microarray/metadata/E-MTAB-3610_expressionFiles.json",
+        sampleMetadata = procdata / metadata / f"GDSC_{release}_preprocessed_sampleMetadata.tsv",
     output:
         microarray_SE = results / "data/microarray/microarray_SE.RDS",
         microarray_expr = procdata / "microarray/microarray_expr.tsv",

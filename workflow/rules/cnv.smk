@@ -32,7 +32,7 @@ rule download_CNV_WESData:
 rule make_CNV_SE:
     input:
         WES_zipped = rules.download_CNV_WESData.output.WES_zipped,
-        sampleMetadata = procdata / metadata / f"{version}_{release}_preprocessed_sampleMetadata.tsv",
+        sampleMetadata = procdata / metadata / f"GDSC_{release}_preprocessed_sampleMetadata.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
     output:
         rse_list = "results/data/cnv/cnv_rse_list.RDS",

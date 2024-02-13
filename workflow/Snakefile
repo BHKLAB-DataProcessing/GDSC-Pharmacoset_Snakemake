@@ -21,15 +21,17 @@ rule get_Pharmacoset:
     input:
         expand(
             results / "data" / "{version}_{release}_Pharmacoset.RDS",
-            version = version,
-            release = release       
-        )
+                # version = ["GDSC1", "GDSC2"],#version,
+                # release = [8.2, 8.4, 8.5]#release       
+                version = version,
+                release = release       
+            )
 
 rule build_Pharmacoset:
     input:
-        treatmentResponseExperiment = results / "data" / "{version}_{release}_treatmentResponseExperiment.RDS",
-        annotated_treatmentMetadata = results / "data"  / "{version}_{release}_treatmentMetadata_annotated.tsv",
-        annotated_sampleMetadata = results / "data"  / "{version}_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        treatmentResponseExperiment = results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
+        annotated_treatmentMetadata = results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+        annotated_sampleMetadata = results / "data"  / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
         summarizedExperimentLists = [
             rules.make_MICROARRAY_SE.output.microarray_SE,

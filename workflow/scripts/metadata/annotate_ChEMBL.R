@@ -15,7 +15,7 @@ if(exists("snakemake")){
 
 chembl_dt <- data.table::fread(INPUT$annotated_CIDS, header = TRUE, sep = "\t")
 
-annotated_ChEMBL_dt <- AnnotationGx::getChemblMechanism(as.character(chembl_dt[,`ChEMBL ID`]))
+annotated_ChEMBL_dt <- AnnotationGx::getChemblMechanism(as.character(chembl_dt[,pubchem.ChEMBL.ID]))
 
 data.table::fwrite(
     annotated_ChEMBL_dt,
