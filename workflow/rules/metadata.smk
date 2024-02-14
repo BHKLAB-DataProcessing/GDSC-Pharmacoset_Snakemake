@@ -161,7 +161,7 @@ rule map_treatments_to_PubChemCID:
 #         8
 #     container: 
 #         annotationGx_docker
-#     script:
+#     script:`
 #         scripts / metadata / "annotate_PubChemCIDS.R"
 
 rule annotate_ChEMBL:
@@ -182,7 +182,7 @@ rule annotate_ChEMBL:
 rule annotate_TreatmentData:
     input:
         annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
-        treatmentMetadata = procdata / metadata / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv",
+        treatmentMetadata = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv"
     output:
         annotated_treatmentMetadata = results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
     log: logs / metadata / "GDSC_{release}_treatmentMetadata_annotated.log"

@@ -99,18 +99,18 @@ rule make_MICROARRAY_SE:
     script:
         scripts / "microarray" / "make_MICROARRAY_SE.R"
 
-# This rule is primarily to parallelize the download of the ~1018 .CEL files.
-# It would be called by the preprocess_MicroArray rule when the input Function getMicroArrayFiles returns a list
-# of files that it needs at the rawdata / "microarray" directory.
-# the sample wildcard is then used to construct the FTP path to the file and download it using wget
-rule download_MicroArrayCEL: 
-    output:
-        rawdata / "microarray" / "{sample}.cel"
-    log:
-        logs / "microarray" / "download_MicroArrayCEL" / "Download_{sample}.log"
-    retries: 5 # Sometimes it randomly fails to download a file
-    shell:
-        """
-        ftpFilePath="https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files"
-        wget -O {output} $ftpFilePath/{wildcards.sample}.cel > {log} 2>&1
-        """
+# # This rule is primarily to parallelize the download of the ~1018 .CEL files.
+# # It would be called by the preprocess_MicroArray rule when the input Function getMicroArrayFiles returns a list
+# # of files that it needs at the rawdata / "microarray" directory.
+# # the sample wildcard is then used to construct the FTP path to the file and download it using wget
+# rule download_MicroArrayCEL: 
+#     output:
+#         rawdata / "microarray" / "{sample}.cel"
+#     log:
+#         logs / "microarray" / "download_MicroArrayCEL" / "Download_{sample}.log"
+#     retries: 5 # Sometimes it randomly fails to download a file
+#     shell:
+#         """
+#         ftpFilePath="https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files"
+#         wget -O {output} $ftpFilePath/{wildcards.sample}.cel > {log} 2>&1
+#         """

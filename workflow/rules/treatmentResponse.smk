@@ -65,7 +65,7 @@ rule fit_reatmentResponseExperiment:
     input:
         tre = results / "data" / "{version}_{release}_treatmentResponseExperiment.RDS",
     output:
-        fit_tre = results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
+        tre_fit = results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
     log:
         logs / "treatmentResponse/{version}_{release}/fit_treatmentResponse.log"
     conda:
