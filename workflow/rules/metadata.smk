@@ -15,10 +15,11 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9018"
-# cellosaurus_docker = "docker://quay.io/biocontainers/r-cellosaurus:0.8.1--r43hdfd78af_0"
+annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9058"
 
-
+################################################################################################
+# MOTHER RULE 
+################################################################################################
 rule preprocess_metadata:
     input:
         treatmentMetadata_annot = expand(
@@ -29,8 +30,9 @@ rule preprocess_metadata:
             version = version, release = release),
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
 
-
-
+################################################################################################
+# DOWNLOAD RULES
+################################################################################################
 rule downloadSampleMetadata:
     input:
         sampleMetadata = lambda wc:
@@ -53,25 +55,6 @@ rule downloadTreatmentMetadata:
         mv {input.treatmentMetadata} {output.treatmentMetadata}
         """
 
-rule downloadMappingFiles:
-    input:
-        sampleMappingFile = HTTP.remote(config["metadata"]['sampleMappingFile']['url']),
-        treatmentMappingFile = HTTP.remote(config["metadata"]['treatmentMappingFile']['url']),
-        GDSC_to_CCLE_treatmentMappingFile = HTTP.remote(config["metadata"]['GDSC_to_CCLE']['treatmentMappingFile']['url']),
-        GDSC_to_CCLE_sampleMappingFile = HTTP.remote(config["metadata"]['GDSC_to_CCLE']['sampleMappingFile']['url']),
-    output:
-        sampleMappingFile = metadata / "sampleMappingFile.xlsx",
-        treatmentMappingFile = metadata / "treatmentMappingFile.csv",
-        GDSC_to_CCLE_treatmentMappingFile = metadata / "GDSC_to_CCLE_treatmentMappingFile.xlsx",
-        GDSC_to_CCLE_sampleMappingFile = metadata / "GDSC_to_CCLE_sampleMappingFile.xlsx",
-    shell:
-        """
-        mv {input.sampleMappingFile} {output.sampleMappingFile};
-        mv {input.treatmentMappingFile} {output.treatmentMappingFile};
-        mv {input.GDSC_to_CCLE_treatmentMappingFile} {output.GDSC_to_CCLE_treatmentMappingFile};
-        mv {input.GDSC_to_CCLE_sampleMappingFile} {output.GDSC_to_CCLE_sampleMappingFile}
-        """
-
 rule downloadCellModelPassportsMetadata:
     input:
         sampleAnnotation = HTTP.remote(config["molecularProfiles"]['cellModelPassports']['sampleAnnotation']['url']),
@@ -85,30 +68,6 @@ rule downloadCellModelPassportsMetadata:
         gunzip -c {input.sampleAnnotation} > {output.CMP_sampleAnnotation};
         gunzip -c {input.geneAnnotation} > {output.CMP_geneAnnotation}
         """
-
-rule preprocess_sampleMetadata:
-    input:
-        sampleMetadata = metadata / "GDSC_{release}_sampleMetadata.xlsx",
-        GDSC_to_CCLE_sampleMappingFile = metadata / "GDSC_to_CCLE_sampleMappingFile.xlsx",
-        CMP_sampleAnnotation = metadata / "cellModelPassports_sampleAnnotation.csv"
-    output:
-        sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv",
-    log: logs / metadata / "GDSC_{release}_preprocess_sampleMetadata.log"
-    conda: conda_env
-    script:
-        scripts / metadata / "preprocess_sampleMetadata.R"
-
-rule preprocess_treatmentMetadata:
-    input:
-        treatmentMetadata = metadata / "GDSC_{release}_treatmentMetadata.csv",
-        GDSC_to_CCLE_treatmentMappingFile = metadata / "GDSC_to_CCLE_treatmentMappingFile.xlsx"
-    output:
-        treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
-    log: logs / metadata / "GDSC_{release}_preprocess_treatmentMetadata.log"
-    conda: conda_env
-    script:
-        scripts / metadata / "preprocess_treatmentMetadata.R"
-
 
 # This rule is a wrapper that retrieves the Ensembl annotation for a given species and build.
 rule download_EnsemblAnnotation:
@@ -127,6 +86,37 @@ rule download_EnsemblAnnotation:
     wrapper:
         "v3.3.6/bio/reference/ensembl-annotation"
 
+################################################################################################
+# SAMPLE METADATA RULES
+################################################################################################
+
+rule preprocess_sampleMetadata:
+    input:
+        sampleMetadata = metadata / "GDSC_{release}_sampleMetadata.xlsx",
+        CMP_sampleAnnotation = metadata / "cellModelPassports_sampleAnnotation.csv"
+    output:
+        sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv",
+    log: logs / metadata / "GDSC_{release}_preprocess_sampleMetadata.log"
+    conda: conda_env
+    script:
+        scripts / metadata / "preprocess_sampleMetadata.R"
+
+
+rule annotate_SampleMetadata:
+    input:
+        sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv"
+    output:
+        sample_Cellosaurus_file = results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+    container: 
+        annotationGx_docker
+    threads:
+        4
+    script:
+        scripts / metadata / "getCellosaurus/mapCellosaurus.R"
+
+################################################################################################
+# GENE ANNOTATION RULES
+################################################################################################
 rule preprocess_geneAnnotation:
     input:
         geneAnnotation = metadata / "cellModelPassports_geneAnnotation.csv",
@@ -138,7 +128,19 @@ rule preprocess_geneAnnotation:
     script:
         scripts / metadata / "preprocess_geneAnnotation.R"
 
-##### ANNOTATIONS
+################################################################################################
+# TREATMENT METADATA RULES
+################################################################################################
+
+rule preprocess_treatmentMetadata:
+    input:
+        treatmentMetadata = metadata / "GDSC_{release}_treatmentMetadata.csv",
+    output:
+        treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
+    log: logs / metadata / "GDSC_{release}_preprocess_treatmentMetadata.log"
+    conda: conda_env
+    script:
+        scripts / metadata / "preprocess_treatmentMetadata.R"
 
 rule map_treatments_to_PubChemCID:
     input:
@@ -161,13 +163,11 @@ rule annotate_ChEMBL:
         annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
     log: logs / metadata / "GDSC_{release}_ChEMBL_annotated.log"
     threads:
-        8
+        1
     container: 
         annotationGx_docker
     script:
         scripts / metadata / "annotate_ChEMBL.R"
-
-
 
 rule combine_annotated_treatmentData:
     input:
@@ -180,23 +180,3 @@ rule combine_annotated_treatmentData:
         annotationGx_docker
     script:
         scripts / metadata / "combine_annotated_treatmentData.R"
-
-
-rule getCellosaurusObject:
-    output:
-        cellosaurus_object = "metadata/cellosaurus.RDS",
-    container: 
-        cellosaurus_docker
-    script:
-        scripts / metadata / "getCellosaurus/getCellosaurusObject.R"
-
-rule annotate_SampleMetadata:
-    input:
-        sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv",
-        cellosaurus_object = "metadata/cellosaurus.RDS", 
-    output:
-        sample_Cellosaurus_file = results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
-    container: 
-        annotationGx_docker
-    script:
-        scripts / metadata / "getCellosaurus/mapCellosaurus.R"

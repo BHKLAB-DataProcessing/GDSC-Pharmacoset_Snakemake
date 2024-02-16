@@ -16,11 +16,15 @@ if(exists("snakemake")){
 }
 library(data.table)
 message("Starting map_treatments_to_PubChem.R")
+
+# 1.0 Read Input Data
+# -------------------
 message("INPUT: ", INPUT)
 treatmentMetadata <- data.table::fread(INPUT$treatmentMetadata)
 message("treatmentMetadata: ", paste0(capture.output(str(treatmentMetadata)), collapse = "\n"))
 
-
+# 2.0 Map treatments to PubChem CID
+# ---------------------------------
 message("Running AnnotationGx::getPubchemCompound on ",nrow(treatmentMetadata), " treatments" )
 compound_nameToCIDS <- AnnotationGx::getPubchemCompound(
     treatmentMetadata[1:100, GDSC.treatmentid],
@@ -31,7 +35,9 @@ compound_nameToCIDS[cids == "PUGREST.NotFound", cids := NA_character_]
 compound_nameToCIDS <- compound_nameToCIDS[!is.na(compound_nameToCIDS$name) & !duplicated(compound_nameToCIDS$name) & !is.na(cids),]
 names(compound_nameToCIDS) <- c("GDSC.treatmentid", "pubchem.CID")
 
-### Get properties from CID
+
+# 3.0 Get properties from PubChem
+# -------------------------------
 properties=c('Title', 'MolecularFormula', 'InChIKey', 'CanonicalSMILES')
 message("Getting the following properties from PubChem: ", paste(properties, collapse= " "), " for ", nrow(compound_nameToCIDS), " compounds")
 pubchemProperties <- compound_nameToCIDS[, AnnotationGx::getPubchemCompound(ids = pubchem.CID, from = 'cid', to = 'property', properties= properties)]
@@ -39,10 +45,10 @@ names(pubchemProperties) <- paste0("pubchem.", names(pubchemProperties))
 pubchemProperties[, pubchem.CID := as.character(pubchem.CID)]
 
 # set each pubchem.CID column to character
-
-
 pubchem_annotated <- merge(compound_nameToCIDS, pubchemProperties, by= "pubchem.CID", all.x = TRUE)
 
+
+# 4.0 Annotate with ChEMBL ID, NSC Number, Drug Induced Liver Injury, CAS, ATC Code
 pseudo_annotate <- function(cid, heading){
     result <- AnnotationGx::annotatePubchemCompound(cid = cid, heading = heading)
     if(length(result) == 0 || is.na(result) || is.null(result)){
@@ -53,7 +59,8 @@ pseudo_annotate <- function(cid, heading){
 }
 
 
-# annotations <- c('ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code')
+annotations <- c('ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code')
+
 message("Annotating with ChEMBL ID")
 pubchem_annotated[, 'pubchem.ChEMBL.ID' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'ChEMBL ID')), by = pubchem.CID]
 
@@ -73,27 +80,13 @@ message("Annotating with Synonyms")
 annotated_treatments <- merge(treatmentMetadata, pubchem_annotated, by.x = "GDSC.treatmentid", by.y = "GDSC.treatmentid", all.x = TRUE)
 
 message("Writing to ", OUTPUT$treatment_CIDS)
+
+# if any column has a list in any of its entries, then collapse the list into a string with ;
+list_columns <- sapply(annotated_treatments, is.list)
+for (i in names(list_columns)[list_columns]) {
+    annotated_treatments[[i]] <- sapply(annotated_treatments[[i]], function(x) paste(x, collapse = ";"))
+}
+
+
 data.table::fwrite(annotated_treatments, OUTPUT$treatment_CIDS, quote = FALSE, sep = "\t", row.names = FALSE)
 
-
-
-# propertiesFromCID <- 
-#     AnnotationGx::getPubChemCompound(
-#         compound_nameToCIDS[, pubchem.CID], 
-#         from='cid', 
-#         to='property', 
-#         properties=c('Title', 'MolecularFormula', 'InChIKey', 'CanonicalSMILES'),
-#         BPPARAM = BiocParallel::MulticoreParam(workers = THREADS, progressbar = TRUE, stop.on.error = FALSE))
-# names(propertiesFromCID) <- paste0("pubchem.", names(propertiesFromCID))
-
-
-# CIDtoSynonyms <- 
-#     AnnotationGx::getPubChemCompound(
-#         compound_nameToCIDS[, PubChem.CID], 
-#         from='cid', 
-#         to='synonyms',
-#         BPPARAM = BiocParallel::MulticoreParam(workers = THREADS, progressbar = TRUE, stop.on.error = FALSE))
-# names(CIDtoSynonyms) <- c("pubchem.CID", "pubchem.Synonyms")
-
-# treatments_annotated_properties <- Reduce(
-#     function(x, y) merge(x, y, by = "pubchem.CID", all = TRUE), list(compound_nameToCIDS, propertiesFromCID, CIDtoSynonyms))

@@ -5,16 +5,15 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image()
+    save.image("preprocess_sampleMetadata.RData")
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
 }
-
+load("preprocess_sampleMetadata.RData")
 # cleanCharacterStrings function from utils.R
-
 snakemake@source("utils.R")
 
 library(data.table)
@@ -24,18 +23,6 @@ library(data.table)
 cat("Reading sample metadata file: ", INPUT$sampleMetadata, sep="\n\t")
 raw_sampleMetadata <- readxl::read_excel(INPUT$sampleMetadata, sheet = 1, col_names = TRUE, na = "NA")
 raw_sampleMetadata <- as.data.table(raw_sampleMetadata)
-
-# read GDSC to CCLE sample mapping file
-# note: the excel file is for some reason organized so that the actual information starts at row 9
-# and ends at row 398 and the columns are C to E.... need to do some hard coding here lol 
-cat("Reading GDSC to CCLE sample mapping file: ", INPUT$GDSC_to_CCLE_sampleMappingFile, sep="\n\t")
-GDSC_to_CCLE_sampleMappingFile <- readxl::read_excel(
-    path = INPUT$GDSC_to_CCLE_sampleMappingFile,  sheet = 1, range = "C9:E398",
-    col_names = TRUE, na = "NA")
-
-GDSC_to_CCLE_sampleMappingFile <- as.data.table(GDSC_to_CCLE_sampleMappingFile
-    )[, .(GDSC.COSMIC_identifier = `GDSC1000 cosmic id`, CCLE.sampleid = `CCLE name`, GDSC.Sample_Name = `GDSC1000 name`)]
-# ONLY 390 SAMPLES ARE MAPPED USING THIS FILE
 
 # CMP SAMPLE ANNOTAITON
 CMP_sampleAnnotation <- fread(INPUT$CMP_sampleAnnotation, header = TRUE)
@@ -83,17 +70,6 @@ names(sampleMetadata) <- ifelse(
 
 # clean the sample names in the sampleMetadata dataframe
 sampleMetadata[, GDSC.sampleid := cleanCharacterStrings(GDSC.Sample_Name)]
-
-
-# NOTE: NO LONGER MERGING missingSamples INTO THE SAMPLEMETADATA. 
-# leaving here for reference
-# This step is for mapping to CCLE:
-# there are two tables, GDSC_to_CCLE_sampleMappingFile and CMP_sampleAnnotation
-# We want to combine the two tables where the CMP_sampleAnnotation is the main table 
-# and the GDSC_to_CCLE_sampleMappingFile is the secondary table
-# We only want the rows from the secondary table where the GDSC.COSMIC_identifier is NOT in the main table's 'COSMIC_ID' column 
-missingSamples <- GDSC_to_CCLE_sampleMappingFile[!GDSC.COSMIC_identifier %in% CMP_sampleAnnotation$GDSC.COSMIC_ID, ] 
-
 
 # Now we want to merge the CMP_sampleAnnotation with the sampleMetadata dataframe
 # need to convert the GDSC.COSMIC_identifier to double

@@ -4,6 +4,9 @@
 
 ## Workflow Directory:
 
+<details>
+<summary>Directory Structure</summary>
+
 ```bash
 .
 ├── config
@@ -58,6 +61,7 @@
 │       └── build_treatmentResponseExperiment.R
 └── Snakefile
 ```  
+</details>
 
 # Setup
 
@@ -92,24 +96,12 @@ conda activate gdsc_pharmacoset
 > To modify the number of cores used, change the `--cores` flag to the desired number.
 
 ``` bash
-snakemake --snakefile workflow/Snakefile \
-    --cores 30 \
-    --show-failed-logs \
-    --keep-going \
-    --rerun-incomplete \
-    --printshellcmds \
-    --use-conda \
-    --use-singularity
-```
-
-
-``` bash
-snakemake --profile workflow/profiles/
+snakemake --profile workflow/profiles/labserver
 ```
 
 ### Dry Run
 ```bash
-snakemake --profile workflow/profiles/ --dryrun
+snakemake --profile workflow/profiles/labserver --dryrun
 ```
 
 ### Create all Conda Environments
@@ -118,25 +110,25 @@ snakemake --profile workflow/profiles/ --dryrun
 > To create all conda environments without running the pipeline, use the `--conda-create-envs-only` flag.
 
 ```bash
-snakemake --profile workflow/profiles/ --use-conda --conda-create-envs-only
+snakemake --profile workflow/profiles/labserver --use-conda --conda-create-envs-only
 ```
 
 
 ## RuleGraph 
 ``` bash
-snakemake --profile workflow/profiles/ --rulegraph | dot -Tsvg > resources/rulegraph.svg
+snakemake --profile workflow/profiles/labserver --rulegraph | dot -Tsvg > resources/rulegraph.svg
 ```
 
 ## Directed Acyclic Graph (DAG)
-``` 
-snakemake --profile workflow/profiles/ --dag | dot -Tsvg > resources/dag.svg
+```  bash
+snakemake --profile workflow/profiles/labserver --dag | dot -Tsvg > resources/dag.svg
 ```
 
 ![DAG](./resources/dag.svg)
 
 ## filegraph
-```
-snakemake --profile workflow/profiles/  --filegraph | dot -Tsvg > resources/filegraph.svg
+``` bash
+snakemake --profile workflow/profiles/labserver  --filegraph | dot -Tsvg > resources/filegraph.svg
 ```
 
 ![filegraph](./resources/filegraph.svg)

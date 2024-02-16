@@ -5,44 +5,64 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image()
+    save.image("mapCellosaurus.RData")
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
 }
+load("mapCellosaurus.RData")
 
-# sampleMetadata <- data.table::fread("procdata/metadata/GDSC2_8.4_preprocessed_sampleMetadata.tsv", sep="\t", header=T)
+BPPARAM <- BiocParallel::MulticoreParam(workers = THREADS)
+
 sampleMetadata <- data.table::fread(INPUT[['sampleMetadata']], sep="\t", header=T)
-cellosaurus_object <- INPUT[['cellosaurus_object']]
-object <- readRDS(cellosaurus_object)
-# /home/bioinf/bhklab/jermiah/repos/GDSC-Pharmacoset_Snakemake/metadata/cellosaurus.RDS
-gdsc_mapped <- data.table::as.data.table(Cellosaurus::mapCells(object, unique(sampleMetadata[,GDSC.sampleid])),keep.rownames = T)
-gdsc_mapped
 
+# The main columns in sampleMetadata are:
+# GDSC.sampleid GDSC.Sample_Name CCLE.sampleid GDSC.BROAD_ID GDSC.RRID CMP.model_id CMP.sampleid GDSC.COSMIC_ID
 
-cellosaurus_DT <- data.table::as.data.table(object)
-columns <- c(
-    "cellLineName", "synonyms", "accession", "misspellings",
-    # "diseases", 
-    "category", "samplingSite", "isCancer", 
-    "oncotreeName", "oncotreeTissue", "oncotreeLevel",
-    "depmapId", "atccId", "ncbiTaxonomyId", "sangerModelId",
-    "sexOfCell", "ageAtSampling"
+# First we will map the GDSC.COSMIC_ID to the Cellosaurus accession
+sampleMetadata[, cellosaurus.acc := {
+    mapped <- AnnotationGx::mapCell2Accession(
+        as.character(GDSC.COSMIC_ID), 
+        from = "dr",
+        BPPARAM = BPPARAM
+        )
+    return(mapped$ac)
+    }
+]
+field_map <- list(
+    "id" = "id",
+    "ac" = "accession",
+    "sy" = "synonyms",
+    "misspelling" = "misspellings",
+    "di" = "diseases",
+    "ca" = "category",
+    "sx" = "sexOfCell",
+    "ag" = "ageAtSampling",
+    "derived-from-site" = "samplingSite"
 )
 
-cellosaurus_DT <- cellosaurus_DT[, ..columns]
-names(cellosaurus_DT) <- paste0("cellosaurus.", names(cellosaurus_DT))
-annotated_sampleMetadata <- merge(
-    sampleMetadata[], 
-    cellosaurus_DT[!is.na(cellosaurus.sangerModelId), ], 
-    by.x = "CMP.model_id", by.y = "cellosaurus.sangerModelId", all.x = TRUE, allow.cartesian = TRUE)
+fields <- names(field_map)
 
-list_columsn <-sapply(annotated_sampleMetadata, is.list)
+sampleMetadata[, paste0("cellosaurus.", fields) := {
+    mapped <- AnnotationGx::mapCell2Accession(
+        as.character(GDSC.COSMIC_ID), 
+        from = "dr",
+        to = fields,
+        BPPARAM = BPPARAM
+    )
+    return(mapped[, 1:length(fields)])
+    }
+]
+save.image("mapCellosaurus.RData")
 
-for (i in names(list_columsn)[list_columsn]) {
-    annotated_sampleMetadata[[i]] <- sapply(annotated_sampleMetadata[[i]], function(x) paste(x, collapse = ";"))
+# rename using map
+for (i in names(field_map)) {
+    data.table::setnames(sampleMetadata, paste0("cellosaurus.", i), paste0("cellosaurus.", field_map[[i]]))
 }
 
-data.table::fwrite(annotated_sampleMetadata, OUTPUT[['sample_Cellosaurus_file']], sep="\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+
+
+
+data.table::fwrite(sampleMetadata, OUTPUT[['sample_Cellosaurus_file']], sep="\t", quote = FALSE, row.names = FALSE, col.names = TRUE)

@@ -27,22 +27,12 @@ names(treatmentMetadata) <- paste0("GDSC.", names(treatmentMetadata))
 
 treatmentMetadata[, GDSC.treatmentid := cleanCharacterStrings(GDSC.DRUG_NAME)]
 
-# For some reason, the GDSC to CCLE treatment mapping file is organized so that the actual information starts at row 3
-# and ends at row 25 and the columns are B to E.... need to do some hard coding here too lol
-GDSC_to_CCLE_treatmentMappingFile <- readxl::read_excel(
-    path = INPUT$GDSC_to_CCLE_treatmentMappingFile, 
-    sheet = 1, range = "B10:E25", col_names = TRUE, na = "NA")
-GDSC_to_CCLE_treatmentMappingFile <- 
-    as.data.table(GDSC_to_CCLE_treatmentMappingFile)[, .(GDSC.DRUG_ID = `GDSC1000 drug ids`, CCLE.treatmentid = `CCLE name`)]
 
-
-
-treatmentMetadata <- merge(treatmentMetadata, GDSC_to_CCLE_treatmentMappingFile, by = "GDSC.DRUG_ID", all.x = TRUE)
 
 # get all the column names, and reorder so that GDSC.treatment is the first column and CCLE.treatment is the second column
 treatmentMetadata <- 
     treatmentMetadata[, 
-    c("GDSC.treatmentid", "CCLE.treatmentid", setdiff(names(treatmentMetadata), c("GDSC.treatmentid", "CCLE.treatmentid"))),
+    c("GDSC.treatmentid", setdiff(names(treatmentMetadata), c("GDSC.treatmentid"))),
     with = FALSE]
 
 # write treatmentMetadata to OUTPUT$treatmentMetadata csv file

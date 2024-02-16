@@ -23,7 +23,32 @@ HTTP = HTTPRemoteProvider()
 microarray_container = "docker://jjjermiah/gdsc_microarray:0.2"
 
 ################################################################################
-## MICROARRAY 
+## MICROARRAY DATA
+
+# input function to get the files from the FTP server and save them locally
+def getMicroArrayFiles(wildcards):
+    basepath = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/"
+    
+    with checkpoints.load_MicroArrayMetadata.get().output[0].open() as f:
+        arrayFiles = json.load(f)
+    
+    # get the first 10 keys of the dictionary
+    files = dict(list(arrayFiles.items()))
+
+    # append filename to basepath for each sample and return 
+    ftpFilePaths = [basepath + arrayFiles[sample]['filename'] for sample in files]
+
+    # return HTTP.remote(ftpFilePaths)
+    return [rawdata / "microarray" / arrayFiles[sample]['filename'] for sample in files]
+
+
+rule download_MicroArray_data_ONLY:
+    input:
+        files = getMicroArrayFiles,
+        srdf = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
+        filelist = rawdata / "microarray/metadata/E-MTAB-3610_filelist.json",
+
+
 # todo: this is a pretty exhaustive method to download the data. 
 # think of a better solution to download the data. 
 rule download_MicroArrayMetadata:
@@ -62,21 +87,7 @@ checkpoint load_MicroArrayMetadata:
             json.dump(microarrayFiles, f, indent=4)
 
 
-# input function to get the files from the FTP server and save them locally
-def getMicroArrayFiles(wildcards):
-    basepath = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/"
-    
-    with checkpoints.load_MicroArrayMetadata.get().output[0].open() as f:
-        arrayFiles = json.load(f)
-    
-    # get the first 10 keys of the dictionary
-    files = dict(list(arrayFiles.items()))
 
-    # append filename to basepath for each sample and return 
-    ftpFilePaths = [basepath + arrayFiles[sample]['filename'] for sample in files]
-
-    # return HTTP.remote(ftpFilePaths)
-    return [rawdata / "microarray" / arrayFiles[sample]['filename'] for sample in files]
 
 rule make_MICROARRAY_SE:
     input: 
@@ -97,18 +108,20 @@ rule make_MICROARRAY_SE:
     script:
         scripts / "microarray" / "make_MICROARRAY_SE.R"
 
-# # This rule is primarily to parallelize the download of the ~1018 .CEL files.
-# # It would be called by the preprocess_MicroArray rule when the input Function getMicroArrayFiles returns a list
-# # of files that it needs at the rawdata / "microarray" directory.
-# # the sample wildcard is then used to construct the FTP path to the file and download it using wget
-# rule download_MicroArrayCEL: 
-#     output:
-#         rawdata / "microarray" / "{sample}.cel"
-#     log:
-#         logs / "microarray" / "download_MicroArrayCEL" / "Download_{sample}.log"
-#     retries: 5 # Sometimes it randomly fails to download a file
-#     shell:
-#         """
-#         ftpFilePath="https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files"
-#         wget -O {output} $ftpFilePath/{wildcards.sample}.cel > {log} 2>&1
-#         """
+# This rule is primarily to parallelize the download of the ~1018 .CEL files.
+# It would be called by the preprocess_MicroArray rule when the input Function getMicroArrayFiles returns a list
+# of files that it needs at the rawdata / "microarray" directory.
+# the sample wildcard is then used to construct the FTP path to the file and download it using wget
+rule download_MicroArrayCEL: 
+    output:
+        rawdata / "microarray" / "{sample}.cel"
+    log:
+        logs / "microarray" / "download_MicroArrayCEL" / "Download_{sample}.log"
+    retries: 5 # Sometimes it randomly fails to download a file
+    shell:
+        """
+        ftpFilePath="https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files"
+        wget -O {output} $ftpFilePath/{wildcards.sample}.cel > {log} 2>&1
+        """
+
+
