@@ -15,19 +15,21 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9016"
-cellosaurus_docker = "docker://quay.io/biocontainers/r-cellosaurus:0.8.1--r43hdfd78af_0"
+annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9018"
+# cellosaurus_docker = "docker://quay.io/biocontainers/r-cellosaurus:0.8.1--r43hdfd78af_0"
 
 
 rule preprocess_metadata:
     input:
         treatmentMetadata_annot = expand(
-            procdata / metadata / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+             results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
             version = version, release = release),
         sampleMetadata_annot = expand(
-            procdata / metadata / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv", 
+            results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
             version = version, release = release),
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
+
+
 
 rule downloadSampleMetadata:
     input:
@@ -151,18 +153,6 @@ rule map_treatments_to_PubChemCID:
     script:
         scripts / metadata / "map_treatments_to_PubChemCID.R"
 
-# rule annotate_PubChemCIDS:
-#     input:
-#         treatment_CIDS = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_MappedCIDS.tsv",
-#     output:
-#         annotated_CIDs = procdata / metadata / "annotation" / "GDSC_{release}_CIDS_{annotationType}.tsv",
-#     log: logs / metadata / "GDSC_{release}_CIDS_{annotationType}.log"
-#     threads:
-#         8
-#     container: 
-#         annotationGx_docker
-#     script:`
-#         scripts / metadata / "annotate_PubChemCIDS.R"
 
 rule annotate_ChEMBL:
     input:
@@ -178,8 +168,8 @@ rule annotate_ChEMBL:
         scripts / metadata / "annotate_ChEMBL.R"
 
 
-# PubChemAnnotations = ['ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code']
-rule annotate_TreatmentData:
+
+rule combine_annotated_treatmentData:
     input:
         annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
         treatmentMetadata = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv"
@@ -207,6 +197,6 @@ rule annotate_SampleMetadata:
     output:
         sample_Cellosaurus_file = results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
     container: 
-        cellosaurus_docker
+        annotationGx_docker
     script:
         scripts / metadata / "getCellosaurus/mapCellosaurus.R"

@@ -18,6 +18,7 @@ scripts = Path("../scripts")
 HTTP = HTTPRemoteProvider()
 
 # NEED TO USE CONTAINER INSTEAD
+# There is some error with pthread 22 from the affy package using conda
 # conda_env = "../envs/microarray.yaml"
 microarray_container = "docker://jjjermiah/gdsc_microarray:0.2"
 
@@ -48,9 +49,7 @@ checkpoint load_MicroArrayMetadata:
         import json
         with open(input.filelist) as f:
             filelist = json.load(f)
-        
         microarrayFiles = dict()
-
         for i, file in enumerate(filelist):
             samplename = file['attributes'][0]['value']
             microarrayFiles[samplename] = dict()
@@ -58,7 +57,6 @@ checkpoint load_MicroArrayMetadata:
             microarrayFiles[samplename]['filename'] = file['path']
             microarrayFiles[samplename]['size'] = file['size']
             microarrayFiles[samplename]['description'] = file['attributes'][1]['value']
-       
         # save to json file
         with open(output.microarrayFiles, 'w') as f:
             json.dump(microarrayFiles, f, indent=4)

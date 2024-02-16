@@ -23,16 +23,26 @@ message("treatmentMetadata: ", paste0(capture.output(str(treatmentMetadata)), co
 
 message("Running AnnotationGx::getPubchemCompound on ",nrow(treatmentMetadata), " treatments" )
 compound_nameToCIDS <- AnnotationGx::getPubchemCompound(
-    treatmentMetadata[1:10, GDSC.treatmentid],
+    treatmentMetadata[1:100, GDSC.treatmentid],
     from='name',
     to='cids',
 )
-
-compound_nameToCIDS <- compound_nameToCIDS[!is.na(compound_nameToCIDS$name) & !duplicated(compound_nameToCIDS$name),]
+compound_nameToCIDS[cids == "PUGREST.NotFound", cids := NA_character_]
+compound_nameToCIDS <- compound_nameToCIDS[!is.na(compound_nameToCIDS$name) & !duplicated(compound_nameToCIDS$name) & !is.na(cids),]
 names(compound_nameToCIDS) <- c("GDSC.treatmentid", "pubchem.CID")
 
-# annotations <- c('ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code')
-# pubchem.ChEMBL.ID	pubchem.CID	pubchem.NSC.Number	pubchem.DILI.Status	pubchem.CAS.Number	pubchem.ATC.Code
+### Get properties from CID
+properties=c('Title', 'MolecularFormula', 'InChIKey', 'CanonicalSMILES')
+message("Getting the following properties from PubChem: ", paste(properties, collapse= " "), " for ", nrow(compound_nameToCIDS), " compounds")
+pubchemProperties <- compound_nameToCIDS[, AnnotationGx::getPubchemCompound(ids = pubchem.CID, from = 'cid', to = 'property', properties= properties)]
+names(pubchemProperties) <- paste0("pubchem.", names(pubchemProperties))
+pubchemProperties[, pubchem.CID := as.character(pubchem.CID)]
+
+# set each pubchem.CID column to character
+
+
+pubchem_annotated <- merge(compound_nameToCIDS, pubchemProperties, by= "pubchem.CID", all.x = TRUE)
+
 pseudo_annotate <- function(cid, heading){
     result <- AnnotationGx::annotatePubchemCompound(cid = cid, heading = heading)
     if(length(result) == 0 || is.na(result) || is.null(result)){
@@ -42,30 +52,30 @@ pseudo_annotate <- function(cid, heading){
     }
 }
 
-compound_nameToCIDS[, 'pubchem.ChEMBL.ID' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'ChEMBL ID')), by = pubchem.CID]
-compound_nameToCIDS[, 'pubchem.NSC.Number' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'NSC Number')), by = pubchem.CID]
-compound_nameToCIDS[, 'pubchem.DILI.Status' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'Drug Induced Liver Injury')), by = pubchem.CID]
-compound_nameToCIDS[, 'pubchem.CAS.Number' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'CAS')), by = pubchem.CID]
-compound_nameToCIDS[, 'pubchem.ATC.Code' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'ATC Code')), by = pubchem.CID]
 
+# annotations <- c('ChEMBL ID', 'NSC Number', 'Drug Induced Liver Injury', 'CAS', 'ATC Code')
+message("Annotating with ChEMBL ID")
+pubchem_annotated[, 'pubchem.ChEMBL.ID' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'ChEMBL ID')), by = pubchem.CID]
 
-annotated_treatments <- merge(treatmentMetadata, compound_nameToCIDS, by.x = "GDSC.treatmentid", by.y = "GDSC.treatmentid", all.x = TRUE)
+message("Annotating with NSC Number")
+pubchem_annotated[, 'pubchem.NSC.Number' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'NSC Number')), by = pubchem.CID]
 
-# compound_nameToCIDS[, 'pubchem.ChEMBL.ID' := lapply(pubchem.CID, function(x) AnnotationGx::annotatePubchemCompound(cid = x, heading = 'ChEMBL ID')), by = pubchem.CID]
-# compound_nameToCIDS[, 'pubchem.NSC.Number' := lapply(pubchem.CID, function(x) AnnotationGx::annotatePubchemCompound(cid = x, heading = 'NSC Number')), by = pubchem.CID]
-# compound_nameToCIDS[, 'pubchem.DILI.Status' := lapply(pubchem.CID, function(x) AnnotationGx::annotatePubchemCompound(cid = x, heading = 'Drug Induced Liver Injury')), by = pubchem.CID]
-# compound_nameToCIDS[, 'pubchem.CAS.Number' := lapply(pubchem.CID, function(x) AnnotationGx::annotatePubchemCompound(cid = x, heading = 'CAS')), by = pubchem.CID]
-# compound_nameToCIDS[, 'pubchem.ATC.Code' := lapply(pubchem.CID, function(x) AnnotationGx::annotatePubchemCompound(cid = x, heading = 'ATC Code')), by = pubchem.CID]
-# compound_nameToCIDS
+message("Annotating with Drug Induced Liver Injury")
+pubchem_annotated[, 'pubchem.DILI.Status' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'Drug Induced Liver Injury')), by = pubchem.CID]
 
+message("Annotating with CAS Number")
+pubchem_annotated[, 'pubchem.CAS.Number' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'CAS')), by = pubchem.CID]
 
-# compound_nameToCIDS[1:10, pubchem.NSC.Number := AnnotationGx::annotatePubchemCompound(cid = pubchem.CID, heading = 'NSC Number')]
-# compound_nameToCIDS[1:10, pubchem.DILI.Status := AnnotationGx::annotatePubchemCompound(cid = pubchem.CID, heading = 'Drug Induced Liver Injury')]
-# compound_nameToCIDS[1:10, pubchem.CAS.Number := AnnotationGx::annotatePubchemCompound(cid = pubchem.CID, heading = 'CAS')]
-# compound_nameToCIDS[1:10, pubchem.ATC.Code := AnnotationGx::annotatePubchemCompound(cid = pubchem.CID, heading = 'ATC Code')]
+message("Annotating with ATC Code")
+pubchem_annotated[, 'pubchem.ATC.Code' := lapply(pubchem.CID, function(x) pseudo_annotate(x, 'ATC Code')), by = pubchem.CID]
 
+message("Annotating with Synonyms")
+annotated_treatments <- merge(treatmentMetadata, pubchem_annotated, by.x = "GDSC.treatmentid", by.y = "GDSC.treatmentid", all.x = TRUE)
 
+message("Writing to ", OUTPUT$treatment_CIDS)
 data.table::fwrite(annotated_treatments, OUTPUT$treatment_CIDS, quote = FALSE, sep = "\t", row.names = FALSE)
+
+
 
 # propertiesFromCID <- 
 #     AnnotationGx::getPubChemCompound(

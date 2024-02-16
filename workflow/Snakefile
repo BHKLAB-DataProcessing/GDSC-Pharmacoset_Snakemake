@@ -29,12 +29,16 @@ rule get_Pharmacoset:
 
 rule build_Pharmacoset:
     input:
-        treatmentResponseExperiment = results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
-        annotated_treatmentMetadata = results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
-        annotated_sampleMetadata = results / "data"  / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
-        geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
+        treatmentResponseExperiment = 
+            results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
+        annotated_treatmentMetadata = 
+            results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+        annotated_sampleMetadata = 
+            results / "data"  / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        geneAnnotation = 
+            procdata / metadata / "preprocessed_geneAnnotation.tsv",
         summarizedExperimentLists = [
-            rules.make_MICROARRAY_SE.output.microarray_SE,
+            # rules.make_MICROARRAY_SE.output.microarray_SE,
             rules.make_RNASEQ_SE.output.rse_list,
             rules.make_CNV_SE.output.rse_list,
             rules.make_MUTATION_SE.output.rse_list,
