@@ -1,4 +1,3 @@
-cores: 30
 show-failed-logs: True
 keep-going: True
 keep-incomplete: True
@@ -10,7 +9,7 @@ use-singularity: True
 # snakemake --profile workflow/profiles/ --default-remote-prefix "orcestradata/GDSC" --default-remote-provider GS --keep-remote
 
 default-remote-provider: "GS"
-default-remote-prefix: "orcestradata/GDSC"
+default-remote-prefix: "orcestradata/GDSC-Pharmacoset_Snakemake"
 
 # When running on Kubernetes
-jobs: 256       
+jobs: 256

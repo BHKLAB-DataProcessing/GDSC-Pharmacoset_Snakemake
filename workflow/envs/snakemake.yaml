@@ -15,3 +15,4 @@ dependencies:
   - r-readxl=1.4.2
   - bioconductor-rtracklayer=1.62.0
   - bioconductor-pharmacogx=3.6.0
+  - kubernetes=1.25.3

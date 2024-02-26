@@ -71,7 +71,7 @@ rule fit_reatmentResponseExperiment:
     conda:
         "../envs/treatmentResponse.yaml"
     threads:
-        30
+        90
     resources:
         mem_mb = 96000
     script:

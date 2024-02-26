@@ -21,10 +21,10 @@ rule get_Pharmacoset:
     input:
         expand(
             results / "data" / "{version}_{release}_Pharmacoset.RDS",
-                # version = ["GDSC1", "GDSC2"],#version,
-                # release = [8.2, 8.4, 8.5]#release       
-                version = version,
-                release = release       
+                version = ["GDSC1", "GDSC2"],#version,
+                release = [8.4, 8.5]#release       
+                # version = version,
+                # release = release       
             )
 
 rule build_Pharmacoset:
