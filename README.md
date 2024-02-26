@@ -1,6 +1,7 @@
 
 # Current Implementation
 
+![PSet](./resources/pset_status.png)
 
 ## Workflow Directory:
 
@@ -8,13 +9,14 @@
 <summary>Directory Structure</summary>
 
 ```bash
-.
+workflow
 ├── config
 │   └── pipeline.yaml
 ├── envs
 │   ├── cnv.yaml
 │   ├── fusion.yaml
 │   ├── metadata.yaml
+│   ├── microarray.Dockerfile
 │   ├── microarray.yaml
 │   ├── mutation.yaml
 │   ├── PharmacoSet.yaml
@@ -23,7 +25,10 @@
 │   ├── test.yaml
 │   └── treatmentResponse.yaml
 ├── profiles
-│   └── config.yaml
+│   ├── gcp
+│   │   └── config.yaml
+│   └── labserver
+│       └── config.yaml
 ├── rules
 │   ├── cnv.smk
 │   ├── fusion.smk
@@ -58,7 +63,8 @@
 │   │   └── make_RNASEQ_SE.R
 │   ├── template.R
 │   └── treatmentResponse
-│       └── build_treatmentResponseExperiment.R
+│       ├── build_treatmentResponseExperiment.R
+│       └── fit_treatmentResponseExperiment.R
 └── Snakefile
 ```  
 </details>
@@ -114,10 +120,12 @@ snakemake --profile workflow/profiles/labserver --use-conda --conda-create-envs-
 ```
 
 
-## RuleGraph 
+## Rulegraph 
 ``` bash
 snakemake --profile workflow/profiles/labserver --rulegraph | dot -Tsvg > resources/rulegraph.svg
 ```
+
+![Rulegraph](./resources/rulegraph.svg)
 
 ## Directed Acyclic Graph (DAG)
 ```  bash
@@ -126,7 +134,7 @@ snakemake --profile workflow/profiles/labserver --dag | dot -Tsvg > resources/da
 
 ![DAG](./resources/dag.svg)
 
-## filegraph
+## Filegraph 
 ``` bash
 snakemake --profile workflow/profiles/labserver  --filegraph | dot -Tsvg > resources/filegraph.svg
 ```

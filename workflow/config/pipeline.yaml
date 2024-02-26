@@ -1,4 +1,7 @@
-
+##################################################################
+# Configuration file for the GDSC PIPELINE
+# The following lines are specific to each pipeline run
+# namely, the dataset name, version, release, and the directories
 name: "DATASET_NAME"                  # Name of the dataset, i.e GDSC, CCLE, CTRP, NCI60
 description: "The Genomics of Drug Sensitivity in Cancer (GDSC) is ...
   This dataset contains molecular profiles for 1,000 cancer cell lines, 
@@ -14,6 +17,8 @@ directories:
   results: "results"                      # Directory for results
   logs: "logs"                            # Directory for logs
 
+##################################################################
+# DATA SOURCES BELOW
 metadata:
   treatmentMappingFile:
     description: "BHKLAB curated mapping file between GDSC and standardized treatment ID names."
@@ -29,8 +34,7 @@ metadata:
       description: "Set of overlapping drugs between our study and CCLE (Barretina et al, Nature 2012)"
       url: "https://www.cancerrxgene.org/gdsc1000/GDSC1000_WebResources//Data/suppData/TableS4E.xlsx"
   referenceGenome:
-    description: "Ensembl Release v91 as described in 
-                  https://depmap.sanger.ac.uk/documentation/datasets/gene-annotation-mapping/"
+    description: "Ensembl Release v91 as described in https://depmap.sanger.ac.uk/documentation/datasets/gene-annotation-mapping/"
     species: "homo_sapiens"
     release: "91"
     build: "GRCh38"
@@ -117,35 +121,48 @@ molecularProfiles:
   
   rnaseq:
     rawdata:
-      description: "Data available from EGA under accession EGAD00001001357. 466 samples. 
-        Access to raw cram files requires DAC approval. NOTE: This data is not yet used in the pipeline"
+      description: "Data available from EGA under accession EGAD00001001357. 466 samples. Access to raw cram files requires DAC approval. NOTE: This data is not yet used in the pipeline"
       url: "https://ega-archive.org/datasets/EGAD00001001357"
     processed:
       description: "Read counts, TPM & FPKM-values for all sequenced models including cell lines and organoids."
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/rnaseq_all_20220624.zip"
 
   cnv:
     WES_CNV: 
       description: "Total copy number and categorical CNA calls derived from WES data processed through PureCN."
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/WES_pureCN_CNV_genes_20221213.zip"  
 
   mutation:
     WGS_VCF: 
       description: "Caveman and Pindel processed VCFs with cancer driver annotation."
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/mutations_wgs_vcf_20221123.zip"
     WES_VCF: 
       description: "Caveman and Pindel processed VCFs with cancer driver annotation."
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/mutations_wes_vcf_20221010.zip"
     all_mutations: 
       description: "A list of all mutations present in all sequenced models."
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/mutations_all_20230202.zip"
     Genes_Metadata:
       description: "The cancer driver gene list used by the Cell Model Passports"
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/driver_mutations_20221208.csv"
 
   fusion:
     gene_fusions:
       description: TODO::(add description)
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://cog.sanger.ac.uk/cmp/download/Fusions_20230725.zip"
 
   microarray:
@@ -160,7 +177,8 @@ molecularProfiles:
       description: TODO::(add description)
       url: "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files/raw-data_filelist.json"
     processed: 
-      description: "RMA normalised basal expression profiles for all the cell-lines."
-      reference: "https://www.cancerrxgene.org/gdsc1000/GDSC1000_WebResources/Home.html"
+      description: "RMA normalised basal expression profiles for all the cell-lines. https://www.cancerrxgene.org/gdsc1000/GDSC1000_WebResources/Home.html"
+      tool: TODO::(add tool)
+      tool_version: TODO::(add tool version)
       url: "https://www.cancerrxgene.org/gdsc1000/GDSC1000_WebResources///Data/preprocessed/Cell_line_RMA_proc_basalExp.txt.zip"
   
