@@ -19,11 +19,11 @@ HTTP = HTTPRemoteProvider()
 
 # NEED TO USE CONTAINER INSTEAD
 # There is some error with pthread 22 from the affy package using conda
-# conda_env = "../envs/microarray.yaml"
+conda_env = "../envs/microarray.yaml"
 microarray_container = "docker://jjjermiah/gdsc_microarray:0.2"
 
 ################################################################################
-## MICROARRAY DATA
+## Main Functions to only perform microarray rules:
 
 # input function to get the files from the FTP server and save them locally
 def getMicroArrayFiles(wildcards):
@@ -41,14 +41,21 @@ def getMicroArrayFiles(wildcards):
     # return HTTP.remote(ftpFilePaths)
     return [rawdata / "microarray" / arrayFiles[sample]['filename'] for sample in files]
 
-
 rule download_MicroArray_data_ONLY:
     input:
         files = getMicroArrayFiles,
         srdf = rawdata / "microarray/E-MTAB-3610.sdrf.txt",
         filelist = rawdata / "microarray/metadata/E-MTAB-3610_filelist.json",
 
+rule get_Microarray_SE:
+    input:
+        microarray_SE = results / "data/microarray/microarray_SE.RDS",
+        microarray_expr = procdata / "microarray/microarray_expr.tsv",
+        metadata = procdata / "microarray/microarray_metadata.json",
 
+
+################################################################################
+## MICROARRAY DATA
 # todo: this is a pretty exhaustive method to download the data. 
 # think of a better solution to download the data. 
 rule download_MicroArrayMetadata:
@@ -86,9 +93,6 @@ checkpoint load_MicroArrayMetadata:
         with open(output.microarrayFiles, 'w') as f:
             json.dump(microarrayFiles, f, indent=4)
 
-
-
-
 rule make_MICROARRAY_SE:
     input: 
         CELfiles = getMicroArrayFiles,
@@ -101,10 +105,12 @@ rule make_MICROARRAY_SE:
         metadata = procdata / "microarray/microarray_metadata.json",
     log: 
         logs / "microarray" / "microarray_SE.log"
-    container: 
-        microarray_container
+    conda:
+        conda_env
+    # container: 
+    #     microarray_container
     threads:
-        4
+        16
     script:
         scripts / "microarray" / "make_MICROARRAY_SE.R"
 

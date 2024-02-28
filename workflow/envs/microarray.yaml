@@ -7,10 +7,10 @@ dependencies:
   - r-essentials=4.3.0
   - r-data.table=1.14.8
   - r-qs=0.25
-  - bioconductor-affy=1.80.0
-  - bioconductor-affyio=1.72.0
-  - bioconductor-biocparallel=1.36.0
-  - bioconductor-hgu219cdf=2.18.0
-  - bioconductor-hgu133plus2cdf=2.18.0
-  - bioconductor-hgu219.db=3.2.3
-  - bioconductor-hgu219probe=2.18.0
+  # - bioconductor-affy=1.80.0
+  # - bioconductor-affyio=1.72.0
+  # - bioconductor-biocparallel=1.36.0
+  # - bioconductor-hgu219cdf=2.18.0
+  # - bioconductor-hgu133plus2cdf=2.18.0
+  # - bioconductor-hgu219.db=3.2.3
+  # - bioconductor-hgu219probe=2.18.0

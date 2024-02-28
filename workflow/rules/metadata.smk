@@ -18,7 +18,7 @@ release = config["GDSC_release"]
 annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9058"
 
 ################################################################################################
-# MOTHER RULE 
+# MOTHER RULES
 ################################################################################################
 rule preprocess_metadata:
     input:
@@ -29,6 +29,17 @@ rule preprocess_metadata:
             results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
             version = version, release = release),
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
+
+rule download_ONLY:
+    input:
+        sampleMetadata = metadata / "GDSC_{release}_sampleMetadata.xlsx",
+        CMP_sampleAnnotation = metadata / "cellModelPassports_sampleAnnotation.csv",
+        CMP_geneAnnotation = metadata / "cellModelPassports_geneAnnotation.csv",
+        ensemblAnnotation = metadata / "Ensembl/{}_{}annotation.gtf".format(
+            config["metadata"]["referenceGenome"]["build"],
+            config["metadata"]["referenceGenome"]["release"],
+        ),
+
 
 ################################################################################################
 # DOWNLOAD RULES

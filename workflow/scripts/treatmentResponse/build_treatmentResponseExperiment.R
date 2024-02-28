@@ -121,6 +121,18 @@ subset_normData[, 'treatmentid' := GDSC.treatmentid]
 subset_normData[, 'sampleid' := GDSC.sampleid]
 
 
+unique_treatments <- unique(subset_normData$GDSC.treatmentid)
+unique_samples <- unique(subset_normData$GDSC.sampleid)
+
+print(paste0("Number of unique treatments: ", length(unique_treatments)))
+print(paste0("Number of unique samples: ", length(unique_samples)))
+
+# subset to only first 30 treatments
+subset_normData <- subset_normData[GDSC.treatmentid %in% unique_treatments[1:30]]
+
+# subset to only first 100 samples
+subset_normData <- subset_normData[GDSC.sampleid %in% unique_samples[1:100]]
+
 
 print("Constructing tre")
 TREDataMapper <- CoreGx::TREDataMapper(rawdata=subset_normData)

@@ -110,10 +110,10 @@ numSamples <- max(sapply(matrices, ncol))
 # 4.0 Setup metadata for SummarizedExperiment object
 # --------------------------------------------------
 metadata <- list(
-    data_source = snakemake@config$molecularProfiles$mutation$SUMMARY,
+    data_source = snakemake@config$molecularProfiles$mutation$all_mutations,
     filename = list(
         data = basename(INPUT$all_mutations),
-        mutation_genes = basename(INPUT$mutation_genes)),
+        gene_annotation = basename(INPUT$mutation_genes)),
     annotation = "mutation",
     samples = numSamples,
     date_created = Sys.Date(),
