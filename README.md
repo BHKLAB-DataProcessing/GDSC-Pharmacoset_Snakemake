@@ -81,6 +81,7 @@ conda install mamba -n base -c conda-forge
 Create a conda environment with the required dependencies:
 > [!NOTE] 
 > This pipeline uses `snakemake=7.32.4`. It is highly recommended to build the environment using the provided `snakemake.yaml` file.
+> All other conda environments that are used in the pipeline are detailed in the `envs` directory.
 
 ```bash
 mamba env create -f GDSC-Pharmacoset_Snakemake/workflow/envs/snakemake.yaml
