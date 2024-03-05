@@ -32,10 +32,11 @@ if(exists("snakemake")){
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
-
+    
+    save.image("rdata_files/make_RNASEQ_SE.RData")
 }
 
-library(data.table)
+suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(GenomicRanges))
 
 
@@ -84,6 +85,7 @@ metadata <- lapply(dataset_types, function(x) {
         filename = basename(unique(rnaseq_data[[x]][["file"]])),
         annotation = "rnaseq",
         datatype = x,
+        gene_annotation = lapply(snakemake@config$metadata$referenceGenome, as.character),
         date = Sys.Date(),
         sessionInfo = capture.output(sessionInfo())    
 )})
@@ -141,7 +143,9 @@ rse_list <- BiocParallel::bplapply(
             geneAnnot[CMP.GENE_ID %in% matched_genes$CMP.GENE_ID], 
             keep.extra.columns = TRUE)
 
-        metadata[[x]]$numSamples <- ncol(mtx)
+        metadata[[x]]$samples <- ncol(mtx)
+        metadata[[x]]$genes <- nrow(mtx)
+
         rse <- SummarizedExperiment::SummarizedExperiment(
             assays = list(exprs = mtx),
             rowRanges = rowRanges,
@@ -154,11 +158,8 @@ rse_list <- BiocParallel::bplapply(
 names(rse_list) <- paste0("rnaseq.", dataset_types)
 
 
-print("Saving Output Files")
-# save rse_list to OUTPUT$rse_list
-
+print(paste("Saving Output Files to", OUTPUT$rse_list))
 saveRDS(rse_list, file = OUTPUT$rse_list)
-
 
 result <- lapply(dataset_types, function(x){
     print(paste0("Writing ", x, " to ", OUTPUT[[x]]))
@@ -172,4 +173,6 @@ result <- lapply(dataset_types, function(x){
         row.names = TRUE)
 })
 
+print(paste("Saving metadata to", OUTPUT$metadata))
 jsonlite::write_json(metadata, OUTPUT$metadata)
+

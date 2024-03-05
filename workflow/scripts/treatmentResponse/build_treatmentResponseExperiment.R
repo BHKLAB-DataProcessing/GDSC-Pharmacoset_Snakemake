@@ -5,7 +5,7 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image("build_treatmentResponseExperiment.RData")
+    save.image("rdata_files/build_treatmentResponseExperiment.RData")
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
@@ -17,7 +17,7 @@ if(exists("snakemake")){
 # -----------
 # load data.table, suppressPackageStartupMessages unless there is an error
 suppressPackageStartupMessages(library(data.table, quietly = TRUE))
-library(dplyr)
+suppressPackageStartupMessages(library(dplyr, quietly = TRUE))
 snakemake@source("../metadata/utils.R")
 
 # 1.0 Read input data into data.table

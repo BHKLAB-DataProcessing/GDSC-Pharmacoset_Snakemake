@@ -7,7 +7,6 @@ logs = Path(config["directories"]["logs"])
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-
 include: "rules/metadata.smk"
 include: "rules/treatmentResponse.smk"
 include: "rules/rnaseq.smk"
@@ -21,16 +20,16 @@ rule get_Pharmacoset:
     input:
         expand(
             results / "data" / "{version}_{release}_Pharmacoset.RDS",
-                version = ["GDSC1", "GDSC2"],#version,
-                release = [8.4, 8.5]#release       
-                # version = version,
-                # release = release       
+                # version = ["GDSC1", "GDSC2"],#version,
+                # release = [8.4, 8.5]#release       
+                version = version,
+                release = release       
             )
 
 rule build_Pharmacoset:
     input:
         treatmentResponseExperiment = 
-            results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
+            results / "data/treatmentResponse" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
         annotated_treatmentMetadata = 
             results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
         annotated_sampleMetadata = 

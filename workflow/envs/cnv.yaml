@@ -7,6 +7,7 @@ dependencies:
   - r-data.table=1.14.8
   - r-qs=0.25
   - r-log4r=0.4.3
+  - r-devtools
   - bioconductor-biocparallel=1.36.0
   - bioconductor-genomicranges=1.54.1
   - bioconductor-summarizedexperiment=1.32.0

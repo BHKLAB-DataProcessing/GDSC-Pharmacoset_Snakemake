@@ -13,7 +13,7 @@ if(exists("snakemake")){
 
 }
 
-library(data.table)
+suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(GenomicRanges))
 
 # 0.2 read in metadata
@@ -38,7 +38,7 @@ cols <- c(
     "gene_id_3prime", "gene_id_5prime", 
     "gene_symbol_3prime", "gene_symbol_5prime")
 
-# 1.0 subset gene fusions to only genes in GDSC sample metadata
+# 1.0 subset fusions to only genes in GDSC sample metadata
 # ----------------------------------------------------------------
 fusion_dt <- dt[model_id %in% sampleMetadata[, CMP.model_id], ..cols]
 
@@ -74,6 +74,8 @@ metadata <- list(
     filename = basename(INPUT$gene_fusions),
     annotation = "fusion",
     samples = ncol(mtx),
+    genes = nrow(mtx),
+    gene_annotation = snakemake@config$metadata$referenceGenome,
     date = Sys.Date(),
     sessionInfo = capture.output(sessionInfo())
 )
@@ -109,19 +111,24 @@ rse_list <- list(
             batchid = rep(NA, ncol(mtx))
         ),
         rowData = rowData,
-        metadata = metadata))
+        metadata = metadata
+    )
+)
 
-
-# 0.3 save the output
+################# Save output #################
 print(paste("Saving output to", OUTPUT$rse_list))
 dir.create(dirname(OUTPUT$rse_list), showWarnings = FALSE, recursive = TRUE)
 saveRDS(rse_list, file = OUTPUT$rse_list)
 
+
+print(paste("Saving output to", OUTPUT$fusion))
 write.table(
     mtx,
     file = OUTPUT$fusion,
     quote = FALSE,
     sep = "\t",
-    row.names = TRUE)
+    row.names = TRUE
+)
 
+print(paste("Saving metadata to", OUTPUT$metadata))
 jsonlite::write_json(metadata, OUTPUT$metadata)

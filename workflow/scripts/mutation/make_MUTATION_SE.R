@@ -5,12 +5,12 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    # save.image()
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
+    save.image("rdata_files/make_MUTATION_SE.RData")
 }
 
 library(data.table)
@@ -49,26 +49,8 @@ mut_dt <- unique(merge(
     mut_data, 
     by.x = "CMP.model_id", by.y = "model_id"))
 
-# 2.0 Create GRanges object from mutGenesAnnot
-# --------------------------------------------
-# Unsure if this is needed, keeping for future reference. 
-# GRanges_dt <- data.table::as.data.table(geneAnnot)
-# GRanges_dt <- GRanges_dt[, 
-#     .(CMP_gene_id, ensembl_gene_id, entrez_id, strand, seqnames, 
-#     hgnc_id, refseq_id, uniprot_id, gene_type, source)]
 
-# mutGenesAnnot <- merge(
-#     mutGenesAnnot[, !c("strand")], 
-#     GRanges_dt, 
-#     by.x = "gene_id", by.y = "CMP_gene_id")
-
-# mutGenesAnnot <- mutGenesAnnot[gene_id %in% mut_dt$gene_id]
-
-# gr <- GenomicRanges::makeGRangesFromDataFrame(
-#     df = mutGenesAnnot, keep.extra.columns=TRUE, na.rm=TRUE,
-#     start.field = "chr_start", end.field = "chr_end", seqnames.field = "seqnames",)
-
-# 3.0 Create Assays object from mut_dt
+# 2.0 Create Assays object from mut_dt
 # -------------------------------------------------
 # isolate only columns to use for assay
 assay_cols <- c("protein_mutation", "rna_mutation",
@@ -111,11 +93,8 @@ numSamples <- max(sapply(matrices, ncol))
 # --------------------------------------------------
 metadata <- list(
     data_source = snakemake@config$molecularProfiles$mutation$all_mutations,
-    filename = list(
-        data = basename(INPUT$all_mutations),
-        gene_annotation = basename(INPUT$mutation_genes)),
+    filename = basename(INPUT$all_mutations),
     annotation = "mutation",
-    samples = numSamples,
     date_created = Sys.Date(),
     sessionInfo = capture.output(sessionInfo())
 )
@@ -143,15 +122,19 @@ rse_list <- lapply(names(matrices), function(matrix_name){
     )
 
     metadata$datatype = matrix_name
+    metadata$samples = ncol(assay)
+    metadata$genes = nrow(assay)
+    metadata$gene_annotation = INPUT$geneAnnotation
 
-    # create SummarizedExperiment object
+
     rse <- SummarizedExperiment::SummarizedExperiment(
         assays = list(exprs = assay),
         rowRanges = gr,
         metadata = metadata,
-        colData = colData)
-
+        colData = colData
+    )
 })
+
 names(rse_list) <- paste0("mut.", gsub("_mutation", "", names(matrices)))
 
 print("Done creating SummarizedExperiment objects")
@@ -172,5 +155,6 @@ outputs_written <- lapply(names(rse_list), function(x) {
         file = OUTPUT[[filename]],
         quote = FALSE,
         sep = "\t",
-        row.names = TRUE)
+        row.names = TRUE
+    )
 })

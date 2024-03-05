@@ -25,20 +25,17 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image()
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
+    save.image("rdata_files/make_MICROARRAY_SE.RData")
 }
 
 # Need to do this because affy:rma() uses parallel processing which is not supported in the current environment
 # and raises a ERROR; return code from pthread_create() is 22
-# BiocManager::install("preprocessCore", configure.args = "--disable-threading", force=TRUE)
 
-
-# exit
 celDirectory <- INPUT$CELfiles
 sample_annotations <- INPUT$CEL_metadata # provided by MTAB
 sampleMetadata <- data.table::fread(INPUT$sampleMetadata, sep= "\t", header=TRUE)
@@ -120,6 +117,8 @@ metadata <- list(
     filename = "1019 files from https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/610/E-MTAB-3610/Files",
     annotation = "rna", 
     samples = ncol(mtx_collapsed),
+    genes = nrow(mtx_collapsed),
+    gene_annotation = "hgu219.db",
     date_created = Sys.Date(),
     sessionInfo = capture.output(sessionInfo())
 )

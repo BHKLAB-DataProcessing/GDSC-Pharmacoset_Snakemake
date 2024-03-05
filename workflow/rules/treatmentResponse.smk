@@ -18,7 +18,7 @@ treatmentResponse = config["treatmentResponse"]
 rule process_allTreatmentResponse:
     input:
         preprocessed = expand(
-            "procdata/treatmentResponse/{version}_{release}_treatmentResponse_preprocessed.qs",
+            results / "data/treatmentResponse" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
             version = ["GDSC1", "GDSC2"],
             release = ["8.4", "8.5",]
         )
@@ -47,9 +47,9 @@ rule build_treatmentResponseExperiment:
         treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
         sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv", 
     output:
-        tre = results / "data/{version}_{release}_treatmentResponseExperiment.RDS",
-        raw = procdata / "treatmentResponse/{version}_{release}_treatmentResponse_raw.tsv",
-        published_profiles = procdata / "treatmentResponse/{version}_{release}_treatmentResponse_published_profiles.tsv",
+        tre = results / "data/treatmentResponse" / "{version}_{release}_treatmentResponseExperiment.RDS",
+        raw = procdata / "treatmentResponse" / "{version}_{release}_treatmentResponse_raw.tsv",
+        published_profiles = procdata / "treatmentResponse" / "{version}_{release}_treatmentResponse_published_profiles.tsv",
     log:
         logs / "treatmentResponse/{version}_{release}/preprocess_treatmentResponse.log"
     conda:
@@ -63,9 +63,9 @@ rule build_treatmentResponseExperiment:
 
 rule fit_reatmentResponseExperiment:
     input:
-        tre = results / "data" / "{version}_{release}_treatmentResponseExperiment.RDS",
+        tre = results / "data/treatmentResponse" / "{version}_{release}_treatmentResponseExperiment.RDS",
     output:
-        tre_fit = results / "data" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
+        tre_fit = results / "data/treatmentResponse" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
     log:
         logs / "treatmentResponse/{version}_{release}/fit_treatmentResponse.log"
     conda:

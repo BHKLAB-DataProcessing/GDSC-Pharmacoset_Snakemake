@@ -1,18 +1,13 @@
 # AUTHOR: Jermiah Joseph
 # CREATED: 01-08-2024
 # This script takes in the following files:
-#  - INPUT$metadata
-#  - INPUT$WES_zipped
-# and outputs the following files:
-#  - OUTPUT$preprocessedCNV
-# 
-# PACKAGE DEPENDENCIES:
-#  - data.table
-#  - GenomicRanges
-#  - log4r
-#  - BiocParallel
-#  - qs
-#
+# 1. sampleMetadata: A data.table containing the sample metadata
+# 2. geneAnnotation: A data.table containing the gene annotation
+# 3. WES_zipped: A zipped file containing the WES CNV data
+# The script then filters the WES CNV data to only include samples in the sampleMetadata
+# and genes in the geneAnnotation. The script then creates a SummarizedExperiment for each
+# column in the WES CNV data and saves the SummarizedExperiment to a file.
+
 # NOTES:
 # 1. Categorisation of Total Copy Number values
 # source(https://depmap.sanger.ac.uk/documentation/datasets/copy-number/)
@@ -40,19 +35,15 @@ if(exists("snakemake")){
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
+    save.image("rdata_files/make_CNV_SE.RData")
 }
 
-
-library(data.table)
 suppressPackageStartupMessages(library(GenomicRanges))
-
+suppressPackageStartupMessages(library(data.table))
 
     
-# 0.2 Read in the input files
+# 0.1 Read in the input files
 # ---------------------------
-
-# sample <- fread(INPUT$sampleMetadata)
-# geneAnnot <- fread(INPUT$geneAnnotation)
 sampleMetadata <- fread(INPUT$sampleMetadata)
 geneAnnot <- fread(INPUT$geneAnnotation)
 
@@ -60,9 +51,6 @@ WES_CNV_dir <- paste0(dirname(INPUT$WES_zipped), "/WES_CNV")
 dir.create(WES_CNV_dir, recursive = TRUE, showWarnings = FALSE)
 print(paste0("Unzipping ", INPUT$WES_zipped, " into ", WES_CNV_dir))
 unzip(INPUT$WES_zipped, exdir = WES_CNV_dir)
-
-# list.files(WES_CNV_dir)
-
 
 inputFilesNames <- file.path(WES_CNV_dir, list.files(WES_CNV_dir))
 
@@ -179,22 +167,21 @@ names(rse_list) <- paste0("cnv.", assayNames)
 # Get numSamples in each matrix
 numSamples <- max(sapply(rse_list, function(x) ncol(SummarizedExperiment::assay(x))))
 
-
 metadata <- list(
     data_source = snakemake@config$molecularProfiles$cnv,
     filename = basename(gene_files),
     annotation = "cnv", 
     samples = numSamples,
+    genes = nrow(geneAnnot),
+    gene_annotation = snakemake@config$metadata$referenceGenome,
     date_created = Sys.time(),
-    sessionInfo = capture.output(sessionInfo()))
+    sessionInfo = capture.output(sessionInfo())
+)
 
 # For each rse, add the metadata
 for (i in seq_along(rse_list)){
     rse_list[[i]]@metadata <- metadata
 }
-
-# Each matrix should have the same number of rows and columns
-# check that the number of rows and columns are the same for each matrix
 
 # 3. Save Output
 # # --------------

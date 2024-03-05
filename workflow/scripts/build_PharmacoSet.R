@@ -137,9 +137,12 @@ mae <- MultiAssayExperiment::MultiAssayExperiment(
 print(paste("MultiAssayExperiment:\n", capture.output(show(mae)), sep = ""))
 
 
+name <- paste(WILDCARDS$version, WILDCARDS$release, sep = "v")
+print(paste("Name:", name))
 
+print("Creating PharmacoSet object")
 pset <- PharmacoGx::PharmacoSet2(
-    name = paste(snakemake@config[c("GDSC_version","GDSC_release")], collapse = "v"),
+    name = name,
     treatment = treatment,
     sample = sample,
     molecularProfiles = mae,
@@ -149,6 +152,9 @@ pset <- PharmacoGx::PharmacoSet2(
     datasetType = "sensitivity"
 )
 
+print(paste("PharmacoSet object:", capture.output(show(pset)), sep = ""))
+
+print(paste("Saving PharmacoSet object to", OUTPUT[[1]]))
 dir.create(dirname(OUTPUT[[1]]), recursive = TRUE, showWarnings = FALSE)
 saveRDS(pset, file = OUTPUT[[1]])
 
