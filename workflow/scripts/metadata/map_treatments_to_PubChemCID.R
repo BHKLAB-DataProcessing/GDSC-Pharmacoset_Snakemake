@@ -27,7 +27,7 @@ message("treatmentMetadata: ", paste0(capture.output(str(treatmentMetadata)), co
 # ---------------------------------
 message("Running AnnotationGx::getPubchemCompound on ",nrow(treatmentMetadata), " treatments" )
 compound_nameToCIDS <- AnnotationGx::getPubchemCompound(
-    treatmentMetadata[1:100, GDSC.treatmentid],
+    treatmentMetadata[, GDSC.treatmentid],
     from='name',
     to='cids',
 )
