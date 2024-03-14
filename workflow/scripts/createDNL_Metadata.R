@@ -4,13 +4,13 @@
 library(data.table)
 
 # Load GDSC2 data
-gdsc2 <- readRDS("results/data/GDSC2_8.5_Pharmacoset.RDS") 
+pset<- readRDS("results/data/GDSC2_8.5_Pharmacoset.RDS") 
 
-treatmentResponse <- slot(gdsc2, "treatmentResponse")
+treatmentResponse <- slot(pset, "treatmentResponse")
 
 treatmentResponse_metadata <- treatmentResponse@metadata[-which(names(treatmentResponse@metadata) == "sessionInfo")]
 
-molecularProfiles <- slot(gdsc2, "molecularProfiles")
+molecularProfiles <- slot(pset, "molecularProfiles")
 molecularProfiles_metadata <- lapply(names(molecularProfiles), function(x){
     se <- molecularProfiles[[x]]
     metadata <- se@metadata
@@ -19,8 +19,8 @@ molecularProfiles_metadata <- lapply(names(molecularProfiles), function(x){
 })
 
 
-treatment <- data.table::as.data.table(slot(gdsc2, "treatment"))
-sample <- data.table::as.data.table(slot(gdsc2, "sample"))
+treatment <- data.table::as.data.table(slot(pset, "treatment"))
+sample <- data.table::as.data.table(slot(pset, "sample"))
 
 sampleMetadata <- {
     numSamples <- nrow(sample)
@@ -60,10 +60,8 @@ metadata_list <- list(
 
 # metadata_list |> jsonlite::toJSON(x=_, pretty = T)
 
-
-
-
 # Save metadata
-dir.create("results/metadata", recursive = TRUE, showWarnings = FALSE)
+save_path <- paste0("results/metadata/", name(pset), "_metadata.json")
+dir.create(dirname(save_path), recursive = TRUE, showWarnings = FALSE)
 
-jsonlite::write_json(metadata_list, "results/metadata/GDSC2_metadata.json")
+jsonlite::write_json(metadata_list, save_path, pretty = T)
