@@ -130,7 +130,7 @@ snakemake --profile workflow/profiles/labserver --rulegraph | dot -Tsvg > resour
 
 ## Directed Acyclic Graph (DAG)
 ```  bash
-snakemake --profile workflow/profiles/labserver --dag | dot -Tsvg > resources/dag.svg
+snakemake --profile workflow/profiles/labserver -F --dag | dot -Tsvg > resources/dag.svg
 ```
 
 ![DAG](./resources/dag.svg)
