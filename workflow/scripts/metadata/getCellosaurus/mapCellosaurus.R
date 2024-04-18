@@ -14,7 +14,10 @@ if(exists("snakemake")){
 }
 load("mapCellosaurus.RData")
 
-BPPARAM <- BiocParallel::MulticoreParam(workers = THREADS)
+# Set this for mapping 
+options("mc.cores" = THREADS)
+
+options("log_level" = "INFO")   # AnnotationGx logging level
 
 sampleMetadata <- data.table::fread(INPUT[['sampleMetadata']], sep="\t", header=T)
 
@@ -49,8 +52,7 @@ sampleMetadata[, paste0("cellosaurus.", fields) := {
     mapped <- AnnotationGx::mapCell2Accession(
         as.character(GDSC.COSMIC_ID), 
         from = "dr",
-        to = fields,
-        BPPARAM = BPPARAM
+        to = fields
     )
     return(mapped[, 1:length(fields)])
     }

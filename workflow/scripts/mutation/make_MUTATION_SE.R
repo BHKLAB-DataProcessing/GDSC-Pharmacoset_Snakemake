@@ -126,7 +126,7 @@ rse_list <- lapply(names(matrices), function(matrix_name){
     rse <- SummarizedExperiment::SummarizedExperiment(
         assays = list(exprs = assay),
         rowRanges = gr,
-        colData = colData
+        colData = colData,
         metadata = metadata
     )
 })

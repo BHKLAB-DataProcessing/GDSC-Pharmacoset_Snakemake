@@ -113,8 +113,10 @@ rule preprocess_sampleMetadata:
         CMP_sampleAnnotation = metadata / "cellModelPassports_sampleAnnotation.csv"
     output:
         sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv",
-    log: logs / metadata / "GDSC_{release}_preprocess_sampleMetadata.log"
-    conda: conda_env
+    log: 
+        logs / metadata / "GDSC_{release}_preprocess_sampleMetadata.log"
+    conda: 
+        conda_env
     script:
         scripts / metadata / "preprocess_sampleMetadata.R"
 
@@ -140,8 +142,10 @@ rule preprocess_geneAnnotation:
         ensemblAnnotation = rules.download_EnsemblAnnotation.output.ensemblAnnotation
     output:
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
-    log: logs / metadata / "preprocess_geneAnnotation.log"
-    conda: conda_env
+    log: 
+        logs / metadata / "preprocess_geneAnnotation.log"
+    conda: 
+        conda_env
     script:
         scripts / metadata / "preprocess_geneAnnotation.R"
 
@@ -154,8 +158,10 @@ rule preprocess_treatmentMetadata:
         treatmentMetadata = metadata / "GDSC_{release}_treatmentMetadata.csv",
     output:
         treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
-    log: logs / metadata / "GDSC_{release}_preprocess_treatmentMetadata.log"
-    conda: conda_env
+    log: 
+        logs / metadata / "GDSC_{release}_preprocess_treatmentMetadata.log"
+    container: 
+        annotationGx_docker
     script:
         scripts / metadata / "preprocess_treatmentMetadata.R"
 
@@ -164,7 +170,8 @@ rule map_treatments_to_PubChemCID:
         treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
     output:
         treatment_CIDS = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv",
-    log: logs / metadata / "GDSC_{release}_map_treatments_to_PubChemCID.log"
+    log: 
+        logs / metadata / "GDSC_{release}_map_treatments_to_PubChemCID.log"
     threads:
         8
     container: 
