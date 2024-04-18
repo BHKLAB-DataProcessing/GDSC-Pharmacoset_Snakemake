@@ -19,7 +19,7 @@ include: "rules/fusion.smk"
 rule get_Pharmacoset:
     input:
         expand(
-            results / "data" / "{version}_{release}_Pharmacoset.RDS",
+            results / "data" / "{version}_{release}/{version}_{release}_Pharmacoset.RDS",
                 # version = ["GDSC1", "GDSC2"],#version,
                 # release = [8.4, 8.5]#release       
                 version = version,
@@ -44,7 +44,7 @@ rule build_Pharmacoset:
             rules.make_FUSION_SE.output.rse_list,
     ],
     output:
-        results / "data" / "{version}_{release}_Pharmacoset.RDS",
+        results / "data" / "{version}_{release}/{version}_{release}_Pharmacoset.RDS",
     log:
         logs / "{version}_{release}_build_Pharmacoset.log",
     conda: "envs/snakemake.yaml"

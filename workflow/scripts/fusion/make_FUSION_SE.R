@@ -70,14 +70,15 @@ matched_names <- match(colnames(mtx), sampleMetadata$GDSC.Sample_Name)
 colnames(mtx) <- sampleMetadata$GDSC.sampleid[matched_names]
 
 metadata <- list(
-    data_source = snakemake@config$molecularProfiles$fusion,
-    filename = basename(INPUT$gene_fusions),
     annotation = "fusion",
-    samples = ncol(mtx),
-    genes = nrow(mtx),
+    datatype = "genes",
+    class = "SummarizedExperiment",
+    filename = basename(INPUT$gene_fusions),
+    data_source = snakemake@config$molecularProfiles$fusion$gene_fusions,
+    numSamples = ncol(mtx),
+    numGenes = nrow(mtx),
     gene_annotation = snakemake@config$metadata$referenceGenome,
-    date = Sys.Date(),
-    sessionInfo = capture.output(sessionInfo())
+    date = Sys.Date()
 )
 
 

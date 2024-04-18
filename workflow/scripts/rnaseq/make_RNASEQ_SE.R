@@ -80,7 +80,7 @@ dataset_types <- c("fpkm", "read_count", "tpm")
 # Create metadata from config information and rnaseq_data
 metadata <- lapply(dataset_types, function(x) {
     list(
-        data_source = snakemake@config$molecularProfiles$rnaseq,
+        data_source = snakemake@config$molecularProfiles$rnaseq$processed,
         filename = basename(unique(rnaseq_data[[x]][["file"]])),
         annotation = "rnaseq",
         datatype = x,

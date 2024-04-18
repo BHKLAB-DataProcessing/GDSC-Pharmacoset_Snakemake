@@ -108,6 +108,16 @@ dt <- wes_gene_dt[, ..cols, with = FALSE]
 source_ <- "Sanger"
 assay_dt <- dt[source == source_, !c("source"), with = FALSE]
 
+# Generic metadata list to be used (and updated for each assay)
+metadata <- list(
+    annotation = "cnv", 
+    data_source = snakemake@config$molecularProfiles$cnv,
+    gene_annotation = snakemake@config$metadata$referenceGenome,
+    class = "RangedSummarizedExperiment",
+    filename = file,
+    date = Sys.Date()
+)
+
 
 # for each column that isnt GDSC.sampleid or symbol, create a matrix with genes rows
 # and samples as columns and set the rownames to the gene_id
@@ -130,22 +140,43 @@ rse_list <- BiocParallel::bplapply(
             fun.aggregate = if(is.character(assay_dt[[col]])) dplyr::first else mean
         )
         assay_dt.t  <- assay_dt.t[gene_name %in% geneAnnot$gene_name,]
+
         print(paste("Converting ", col, " to matrix"))
         mtx <- as.matrix(
             assay_dt.t[, !c("gene_name"), with = FALSE],
             rownames = assay_dt.t[["gene_name"]])
+            
         # now NA rownames
         mtx <- mtx[!is.na(rownames(mtx)),]
         rowRanges <- GenomicRanges::makeGRangesFromDataFrame(
             geneAnnot[gene_name %in% rownames(mtx) & !is.na(gene_name),], 
-            keep.extra.columns = TRUE)
+            keep.extra.columns = TRUE
+        )
+
         print(sprintf(
             "Matrix %s has %d rows and %d columns", col, nrow(mtx), ncol(mtx)))
+
+        tmpMetadata <- c(
+            metadata,
+            list(
+                datatype = col,
+                numSamples = ncol(mtx),
+                numGenes = nrow(mtx)
+            )
+        )
+
+        colData <- data.frame(
+            sampleid = colnames(mtx),
+            batchid = rep(NA, ncol(mtx))
+        )
 
         print(paste("Creating SummarizedExperiment for ", col))
         rse <- SummarizedExperiment::SummarizedExperiment(
             assays = list(exprs = mtx),
-            rowRanges = rowRanges)
+            colData = colData,
+            rowRanges = rowRanges,
+            metadata = tmpMetadata
+        )
         
         print(paste("Writing ", col, " to ", OUTPUT[[col]]))
         write.table(
@@ -165,16 +196,6 @@ names(rse_list) <- paste0("cnv.", assayNames)
 # Get numSamples in each matrix
 numSamples <- max(sapply(rse_list, function(x) ncol(SummarizedExperiment::assay(x))))
 
-metadata <- list(
-    data_source = snakemake@config$molecularProfiles$cnv,
-    filename = basename(gene_files),
-    annotation = "cnv", 
-    samples = numSamples,
-    genes = nrow(geneAnnot),
-    gene_annotation = snakemake@config$metadata$referenceGenome,
-    date_created = Sys.time(),
-    sessionInfo = capture.output(sessionInfo())
-)
 
 # For each rse, add the metadata
 for (i in seq_along(rse_list)){
