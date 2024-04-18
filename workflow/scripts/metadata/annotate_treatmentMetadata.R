@@ -83,15 +83,58 @@ all_annotated_treatmentMetadata <- merge(
     all.x = T
 )
 
-
-
-
 ## ------------------------------------------------------------------------- ##
-# Do something
 
+
+annotated_treatmentMetadata <- copy(all_annotated_treatmentMetadata)
+message("\n\nAnnotating with ChEMBL using Unichem-obtained ChEMBL IDs")
+chembl_mechanisms_dt <- AnnotationGx::getChemblMechanism(
+    annotated_treatmentMetadata$unichem.ChEMBL
+)
+
+chembl_cols_of_interest <- c(
+        "molecule_chembl_id",  "parent_molecule_chembl_id", "target_chembl_id", "record_id", 
+        "mechanism_of_action", "mechanism_comment", "action_type"
+    )
+
+annotated_treatmentMetadata <- merge(
+    annotated_treatmentMetadata, 
+    chembl_mechanisms_dt[, ..chembl_cols_of_interest], 
+    by.x = "unichem.ChEMBL",
+    by.y = "molecule_chembl_id", 
+    all.x = TRUE
+    )
+
+data.table::setnames(
+    annotated_treatmentMetadata, 
+    chembl_cols_of_interest, 
+    paste0("chembl.", chembl_cols_of_interest), 
+    skip_absent = TRUE)
+
+annotated_treatmentMetadata <- annotated_treatmentMetadata[!duplicated(pubchem.CID),]
+
+
+final_treatmentMetadata <- merge(
+    treatmentMetadata, 
+    all_annotated_treatmentMetadata, 
+    by.x = "GDSC.treatmentid", 
+    by.y = "pubchem.name", 
+    all.x = TRUE
+
+)
 
 
 
 ###############################################################################
 # Save OUTPUT 
 ###############################################################################
+
+message("\n\nWriting out cleaned data to ", OUTPUT$annotated_treatmentMetadata)
+
+data.table::fwrite(
+    final_treatmentMetadata, 
+    file = OUTPUT$annotated_treatmentMetadata,
+    quote = FALSE, 
+    sep = "\t"
+)
+

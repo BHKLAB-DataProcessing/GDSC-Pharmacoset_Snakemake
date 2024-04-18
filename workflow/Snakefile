@@ -31,9 +31,9 @@ rule build_Pharmacoset:
         treatmentResponseExperiment = 
             results / "data/treatmentResponse" / "{version}_{release}_treatmentResponseExperiment_fitted.RDS",
         annotated_treatmentMetadata = 
-            results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+            procdata / "metadata" / "annotation" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
         annotated_sampleMetadata = 
-            results / "data"  / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+            procdata /  "metadata" / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
         geneAnnotation = 
             procdata / metadata / "preprocessed_geneAnnotation.tsv",
         summarizedExperimentLists = [

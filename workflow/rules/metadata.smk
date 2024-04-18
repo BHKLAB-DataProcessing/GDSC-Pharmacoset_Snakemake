@@ -123,7 +123,7 @@ rule annotate_SampleMetadata:
     input:
         sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv"
     output:
-        sample_Cellosaurus_file = results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        sample_Cellosaurus_file = procdata / "metadata" / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
     container: 
         annotationGx_docker
     threads:
