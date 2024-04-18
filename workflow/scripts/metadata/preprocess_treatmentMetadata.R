@@ -10,7 +10,6 @@ if(exists("snakemake")){
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
-    save.image("preprocess_treatmentMetadata.RData")
 }
 
 # cleanCharacterStrings function from utils.R

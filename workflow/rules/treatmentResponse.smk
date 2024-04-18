@@ -55,9 +55,9 @@ rule build_treatmentResponseExperiment:
     conda:
         "../envs/treatmentResponse.yaml"
     threads:
-        30
+        8
     resources:
-        mem_mb = 96000
+        mem_mb = 16000
     script:
         scripts / "treatmentResponse/build_treatmentResponseExperiment.R"
 

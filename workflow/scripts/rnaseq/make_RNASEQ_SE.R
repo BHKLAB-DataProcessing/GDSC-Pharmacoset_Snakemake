@@ -33,7 +33,6 @@ if(exists("snakemake")){
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
     
-    save.image("rdata_files/make_RNASEQ_SE.RData")
 }
 
 suppressPackageStartupMessages(library(data.table))
@@ -136,6 +135,10 @@ rse_list <- BiocParallel::bplapply(
             dt[, !c("gene_name"), with = FALSE],
             rownames = dt[["gene_name"]]
         )
+
+        # Convert all values in mtx from character to numeric
+        mtx <- apply(mtx, 2, as.numeric)
+
         print(sprintf(
             "Matrix %s has %d rows and %d columns", x, nrow(mtx), ncol(mtx)))
 

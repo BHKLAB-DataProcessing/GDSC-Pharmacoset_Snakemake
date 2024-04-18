@@ -10,7 +10,6 @@ if(exists("snakemake")){
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
-    save.image("rdata_files/make_MUTATION_SE.RData")
 }
 
 library(data.table)
