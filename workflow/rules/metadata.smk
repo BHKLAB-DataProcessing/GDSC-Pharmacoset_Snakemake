@@ -15,19 +15,25 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9058"
+annotationGx_docker = "docker://bhklab/annotationgx-r:0.0.0.9095"
 
 ################################################################################################
 # MOTHER RULES
 ################################################################################################
+rule run_annotate_treatmentMetadata:
+    input:
+        treatment_CIDS = expand(
+            procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+            release = release), 
+
 rule preprocess_metadata:
     input:
         treatmentMetadata_annot = expand(
-             results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
-            version = version, release = release),
+            results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+            release = release),
         sampleMetadata_annot = expand(
             results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
-            version = version, release = release),
+            release = release),
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
 
 rule download_ONLY:
@@ -166,28 +172,16 @@ rule map_treatments_to_PubChemCID:
     script:
         scripts / metadata / "map_treatments_to_PubChemCID.R"
 
-
-rule annotate_ChEMBL:
+rule annotate_treatmentMetadata:
     input:
         annotated_CIDS = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv",
     output:
-        annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
-    log: logs / metadata / "GDSC_{release}_ChEMBL_annotated.log"
+        annotated_treatmentMetadata = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+    log: 
+        logs / metadata / "GDSC_{release}_annotate_treatmentMetadata.log"
     threads:
-        1
+        8
     container: 
         annotationGx_docker
     script:
-        scripts / metadata / "annotate_ChEMBL.R"
-
-rule combine_annotated_treatmentData:
-    input:
-        annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
-        treatmentMetadata = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv"
-    output:
-        annotated_treatmentMetadata = results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
-    log: logs / metadata / "GDSC_{release}_treatmentMetadata_annotated.log"
-    container: 
-        annotationGx_docker
-    script:
-        scripts / metadata / "combine_annotated_treatmentData.R"
+        scripts / metadata / "annotate_treatmentMetadata.R"

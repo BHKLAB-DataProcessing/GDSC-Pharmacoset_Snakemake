@@ -5,13 +5,10 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image("rdata_files/build_treatmentResponseExperiment.RData")
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 }
-
-
 
 # 0.1 Startup 
 # -----------
@@ -169,7 +166,6 @@ metadata <- list(
         processed = basename(INPUT$processed)
     ),
     date = Sys.Date(),
-    sessionInfo = sessionInfo()
 )
 CoreGx::metadata(gdsc_tre) <- metadata
 ######
@@ -183,93 +179,3 @@ saveRDS(gdsc_tre, OUTPUT$tre)
 
 
 
-# print("Endoaggregating tre with recomputed profiles")
-# gdsc_tre2 <- gdsc_tre[grepl("^[A-Z]",  rownames(gdsc_tre)),]
-
-# drugs <- unique(c(gdsc_tre2@rowData[,unique(GDSC.treatmentid)][1:20], drug_exp_count[1:5]))
-# drugs <- drug_exp_count[1:10]
-# # last 100 drugs
-# drugs <- drug_exp_count[(length(drug_exp_count) - 10):length(drug_exp_count)]
-
-# {
-# start <- Sys.time()
-# gdsc_tre_fit <- gdsc_tre["erlotinib",]  |>
-#         CoreGx::endoaggregate(
-#             {  # the entire code block is evaluated for each group in our group by
-#                 # 1. fit a log logistic curve over the dose range
-#                 fit <- PharmacoGx::logLogisticRegression(Dose, Viability,
-#                     viability_as_pct=FALSE)
-#                 # 2. compute curve summary metrics
-#                 # ic50 <- PharmacoGx::computeIC50(Dose, Hill_fit=fit)
-#                 # aac <- PharmacoGx::computeAUC(Dose, Hill_fit=fit)
-#                 # 3. assemble the results into a list, each item will become a
-#                 #   column in the target assay.
-#                 list(
-#                     HS=fit[["HS"]]
-#                     # E_inf = fit[["E_inf"]],
-#                     # EC50 = fit[["EC50"]],
-#                     # Rsq=as.numeric(unlist(attributes(fit))),
-#                     # aac_recomputed=aac,
-#                     # ic50_recomputed=ic50
-#                 )
-#             },
-#             assay="sensitivity",
-#             target="profiles_recomputed",
-#             enlist=FALSE,  # this option enables the use of a code block for aggregation
-#             by=c("treatmentid", "sampleid"),
-#             nthread=28  # parallelize over multiple cores to speed up the computation
-#     )
-# # gdsc_tre_fit
-# print(paste0("Time taken for ", Sys.time() - start))
-# }
-
-# Record the result of the computation and the time taken
-# create empty list to store results
-
-
-# results <- list()
-# test_tre <- function(n,m, tre=gdsc_tre, results = results){
-#     start <- Sys.time()
-#     print(paste0("Starting Time: ", format(start, "%H:%M:%S")))
-#     new_tre <- tre[ unique(tre@rowData$treatmentid)[1:n], unique(tre@colData$sampleid)[1:m]] |> CoreGx::endoaggregate(
-#             {  # the entire code block is evaluated for each group in our group by
-#                 # 1. fit a log logistic curve over the dose range
-#                 fit <- PharmacoGx::logLogisticRegression(Dose, Viability,
-#                     viability_as_pct=FALSE)
-#                 # 2. compute curve summary metrics
-#                 ic50 <- PharmacoGx::computeIC50(Dose, Hill_fit=fit)
-#                 aac <- PharmacoGx::computeAUC(Dose, Hill_fit=fit)
-#                 # 3. assemble the results into a list, each item will become a
-#                 #   column in the target assay.
-#                 list(
-#                     HS=fit[["HS"]],
-#                     E_inf = fit[["E_inf"]],
-#                     EC50 = fit[["EC50"]],
-#                     Rsq=as.numeric(unlist(attributes(fit))),
-#                     aac_recomputed=aac,
-#                     ic50_recomputed=ic50
-#                 )
-#             },
-#             assay="sensitivity",
-#             target="profiles_recomputed",
-#             enlist=FALSE,  # this option enables the use of a code block for aggregation
-#             by=c("treatmentid", "sampleid"),
-#             nthread=30  # parallelize over multiple cores to speed up the computation
-#     )
-#     elapsed <- Sys.time() - start
-#     print(paste0("Time taken for ", n, " samples and ", m, " treatments: ", elapsed))
-#     results[[paste0(n, "_", m)]] <- list(
-#         tre = new_tre,
-#         time = elapsed
-#     )
-#     return(results)
-# }
-# max_n <- uniqueN(gdsc_tre@rowData$treatmentid)
-# max_m <- uniqueN(gdsc_tre@colData$sampleid)
-# # test_tre(10, 20)
-# results <- test_tre(25, 25, results = results)
-# results <- test_tre(50, 50, results = results)
-# results <- test_tre(100, 100, results = results)
-# results <- test_tre(200, 200, results = results)
-# results <- test_tre(max_n, max_m, results = results)
-# test_tre(length(tre@rowData$GDSC.treatmentid), length(tre@colData$GDSC.sampleid))
