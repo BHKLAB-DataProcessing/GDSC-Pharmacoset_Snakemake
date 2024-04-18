@@ -24,6 +24,7 @@ sampleMetadata <- data.table::fread(INPUT[['sampleMetadata']], sep="\t", header=
 # The main columns in sampleMetadata are:
 # GDSC.sampleid GDSC.Sample_Name CCLE.sampleid GDSC.BROAD_ID GDSC.RRID CMP.model_id CMP.sampleid GDSC.COSMIC_ID
 
+message("Mapping GDSC.COSMIC_ID to Cellosaurus accession")
 # First we will map the GDSC.COSMIC_ID to the Cellosaurus accession
 sampleMetadata[, cellosaurus.acc := {
     mapped <- AnnotationGx::mapCell2Accession(
@@ -34,37 +35,47 @@ sampleMetadata[, cellosaurus.acc := {
     return(mapped$ac)
     }
 ]
-field_map <- list(
-    "id" = "id",
-    "ac" = "accession",
-    "sy" = "synonyms",
-    "misspelling" = "misspellings",
-    "di" = "diseases",
-    "ca" = "category",
-    "sx" = "sexOfCell",
-    "ag" = "ageAtSampling",
-    "derived-from-site" = "samplingSite"
+
+show(sampleMetadata)
+message("Number of samples: ", nrow(sampleMetadata))
+
+message("Annotating Cellosaurus accessions")
+annotated_accessions <- AnnotationGx::annotateCellAccession(
+    accessions = sampleMetadata$cellosaurus.acc,
 )
+message("Number of annotated accessions: ", nrow(annotated_accessions))
 
-fields <- names(field_map)
+message("Number of unique categories: ")
+annotated_accessions[, .N, by = "category"]
 
-sampleMetadata[, paste0("cellosaurus.", fields) := {
-    mapped <- AnnotationGx::mapCell2Accession(
-        as.character(GDSC.COSMIC_ID), 
-        from = "dr",
-        to = fields
-    )
-    return(mapped[, 1:length(fields)])
-    }
-]
-save.image("mapCellosaurus.RData")
+message("Number of unique sexOfCell: ")
+annotated_accessions[, .N, by = "sexOfCell"]
 
-# rename using map
-for (i in names(field_map)) {
-    data.table::setnames(sampleMetadata, paste0("cellosaurus.", i), paste0("cellosaurus.", field_map[[i]]))
-}
+annotated_accessions[, synonyms := sapply(synonyms, function(x) paste(x, collapse = "; "))]
+annotated_accessions[, diseases := sapply(diseases, function(x) paste(x, collapse = "; "))]
+annotated_accessions[, c("crossReferences", "hierarchy", "comments") := NULL]
 
+names(annotated_accessions) <- paste0("cellosaurus.", names(annotated_accessions))
+annotated_accessions <- unique(annotated_accessions)
+show(annotated_accessions)
 
+final_annotated <- merge(
+    annotated_accessions,
+    sampleMetadata, 
+    by.x = "cellosaurus.accession",
+    by.y = "cellosaurus.acc",
+    all.x = TRUE
+) |> unique()
 
+final_annotated[, sampleid := "GDSC.sampleid"]
 
-data.table::fwrite(sampleMetadata, OUTPUT[['sample_Cellosaurus_file']], sep="\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+message("Writing output to: ", OUTPUT[['sample_Cellosaurus_file']])
+
+data.table::fwrite(
+    final_annotated, 
+    OUTPUT[['sample_Cellosaurus_file']], 
+    sep="\t", 
+    quote = FALSE, 
+    row.names = FALSE, 
+    col.names = TRUE
+)

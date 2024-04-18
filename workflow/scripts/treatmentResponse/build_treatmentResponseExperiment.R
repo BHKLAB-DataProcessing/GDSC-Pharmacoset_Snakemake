@@ -146,7 +146,6 @@ CoreGx::assayMap(TREDataMapper) <- list(
         c("treatmentid", "BARCODE", "Dose", "sampleid"),
         c("Viability")))
 
-
 gdsc_tre <- CoreGx::metaConstruct(TREDataMapper)
 
 published_profiles <- procData[
@@ -165,7 +164,7 @@ metadata <- list(
         raw = basename(INPUT$rawdata),
         processed = basename(INPUT$processed)
     ),
-    date = Sys.Date(),
+    date = Sys.Date()
 )
 CoreGx::metadata(gdsc_tre) <- metadata
 ######

@@ -20,11 +20,19 @@ annotationGx_docker = "docker://bhklab/annotationgx-r:0.0.0.9095"
 ################################################################################################
 # MOTHER RULES
 ################################################################################################
+# run any of these rules i.e snakemake ... run_annotate_treatmentMetadata without any of the other rules
+
 rule run_annotate_treatmentMetadata:
     input:
         treatment_CIDS = expand(
             procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
             release = release), 
+
+rule run_annotate_sampleMetadata:
+    input:
+        sample_Cellosaurus_file = expand(
+            procdata / metadata / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+            release = release),
 
 rule preprocess_metadata:
     input:
