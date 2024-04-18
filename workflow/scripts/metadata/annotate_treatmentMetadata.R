@@ -19,12 +19,12 @@ if(exists("snakemake")){
 
     # Assuming that this script is named after the rule
     # Saves the workspace to "resources/"annotate_treatmentMetadata"
-    file.path("resources", paste0(snakemake@rule, ".RData")) |> 
-        save.image()
+    # file.path("resources", paste0(snakemake@rule, ".RData")) |> 
+        # save.image()
 }else{
     # If the snakemake object does not exist, load the workspace
-    file.path("resources", "annotate_treatmentMetadata.RData") |>
-        load()
+    # file.path("resources", "annotate_treatmentMetadata.RData") |>
+        # load()
 }
 
 
