@@ -67,7 +67,7 @@ final_annotated <- merge(
     all.x = TRUE
 ) |> unique()
 
-final_annotated[, sampleid := "GDSC.sampleid"]
+final_annotated[, sampleid := GDSC.sampleid]
 
 message("Writing output to: ", OUTPUT[['sampleMetadata']])
 

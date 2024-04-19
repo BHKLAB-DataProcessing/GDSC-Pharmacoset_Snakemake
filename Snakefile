@@ -19,9 +19,9 @@ rule get_PharmacoSet:
     input:
         expand(
             results / "data" / "{version}_{release}/{version}_{release}_PharmacoSet.RDS",
-                version = ["GDSC1", "GDSC2"],#version,
+                # version = ["GDSC1", "GDSC2"],#version,
                 # release = [8.4, 8.5]#release       
-                # version = version,
+                version = version,
                 release = release       
             )
 
@@ -39,7 +39,8 @@ rule build_PharmacoSet:
         results / "data" / "{version}_{release}/{version}_{release}_PharmacoSet.RDS",
     log:
         logs / "{version}_{release}_build_PharmacoSet.log",
-    conda: "workflow/envs/PharmacoSet.yaml"
+    conda: 
+        "workflow/envs/PharmacoSet.yaml"
     script:
         "workflow/scripts/build_PharmacoSet.R"
 
