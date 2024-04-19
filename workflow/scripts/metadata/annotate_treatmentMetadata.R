@@ -34,7 +34,10 @@ if(exists("snakemake")){
 annotatedCIDs <- data.table::fread(INPUT$annotated_CIDS)
 message("annotatedCIDs: ", paste0(capture.output(str(annotatedCIDs)), collapse = "\n"))
 
+# Set this for mapping 
+options("mc.cores" = THREADS)
 
+options("log_level" = "INFO")   # AnnotationGx logging level
 
 ###############################################################################
 # Main Script
@@ -48,19 +51,22 @@ sources_of_interest <- c("chembl", "drugbank", "chebi", "phamgkb", "lincs", "cli
 sourceID <- unichem_sources[Name == "pubchem", SourceID]
 
 message("\n\nAnnotating with unichem...")
-unichem_mappings <- lapply(annotatedCIDs$pubchem.CID, function(x){
+unichem_mappings <- parallel::mclapply(annotatedCIDs$pubchem.CID, function(x){
   tryCatch({
     result <- AnnotationGx::queryUnichemCompound(type = "sourceID", compound = x, sourceID = sourceID)
 
     subset <- result$External_Mappings[Name %in% sources_of_interest, .(compoundID, Name)]
     # make Name the column names and the values the compoundID 
     subset$cid <- x
-    dcast(subset, cid ~ Name, value.var = "compoundID", fun.aggregate = list)
-  }, error = function(e) NULL)
+    data.table::dcast(subset, cid ~ Name, value.var = "compoundID", fun.aggregate = list)
+  }, error = function(e) {
+    message("Error: ", e$message)
+    })
   } 
   ) |> data.table::rbindlist(fill = T)
 show(unichem_mappings)
 
+message("Unlisting unichem_mappings")
 # for each column, if its a list then make it a string with a comma separator
 for(col in names(unichem_mappings)){
   if(is.list(unichem_mappings[[col]])){
@@ -76,7 +82,7 @@ names(unichem_mappings) <- paste(
     )
 
 all_annotated_treatmentMetadata <- merge(
-    treatment_annotations, 
+    annotatedCIDs, 
     unichem_mappings, 
     by.x = "pubchem.CID", 
     by.y = "unichem.NA",        # dw about name being NA itll get removed  by this merge
@@ -86,43 +92,43 @@ all_annotated_treatmentMetadata <- merge(
 ## ------------------------------------------------------------------------- ##
 
 
-annotated_treatmentMetadata <- copy(all_annotated_treatmentMetadata)
-message("\n\nAnnotating with ChEMBL using Unichem-obtained ChEMBL IDs")
-chembl_mechanisms_dt <- AnnotationGx::getChemblMechanism(
-    annotated_treatmentMetadata$unichem.ChEMBL
-)
+# annotated_treatmentMetadata <- data.table::copy(all_annotated_treatmentMetadata)
+# message("\n\nAnnotating with ChEMBL using Unichem-obtained ChEMBL IDs")
+# chembl_mechanisms_dt <- AnnotationGx::getChemblMechanism(
+#     annotated_treatmentMetadata$unichem.ChEMBL
+# )
 
-chembl_cols_of_interest <- c(
-        "molecule_chembl_id",  "parent_molecule_chembl_id", "target_chembl_id", "record_id", 
-        "mechanism_of_action", "mechanism_comment", "action_type"
-    )
+# chembl_cols_of_interest <- c(
+#         "molecule_chembl_id",  "parent_molecule_chembl_id", "target_chembl_id", "record_id", 
+#         "mechanism_of_action", "mechanism_comment", "action_type"
+#     )
 
-annotated_treatmentMetadata <- merge(
-    annotated_treatmentMetadata, 
-    chembl_mechanisms_dt[, ..chembl_cols_of_interest], 
-    by.x = "unichem.ChEMBL",
-    by.y = "molecule_chembl_id", 
-    all.x = TRUE
-    )
+# annotated_treatmentMetadata <- merge(
+#     annotated_treatmentMetadata, 
+#     chembl_mechanisms_dt[, ..chembl_cols_of_interest], 
+#     by.x = "unichem.ChEMBL",
+#     by.y = "molecule_chembl_id", 
+#     all.x = TRUE
+#     )
 
-data.table::setnames(
-    annotated_treatmentMetadata, 
-    chembl_cols_of_interest, 
-    paste0("chembl.", chembl_cols_of_interest), 
-    skip_absent = TRUE)
+# data.table::setnames(
+#     annotated_treatmentMetadata, 
+#     chembl_cols_of_interest, 
+#     paste0("chembl.", chembl_cols_of_interest), 
+#     skip_absent = TRUE)
 
-annotated_treatmentMetadata <- annotated_treatmentMetadata[!duplicated(pubchem.CID),]
+# annotated_treatmentMetadata <- annotated_treatmentMetadata[!duplicated(pubchem.CID),]
 
 
-final_treatmentMetadata <- merge(
-    treatmentMetadata, 
-    all_annotated_treatmentMetadata, 
-    by.x = "GDSC.treatmentid", 
-    by.y = "pubchem.name", 
-    all.x = TRUE
+# final_treatmentMetadata <- merge(
+#     treatmentMetadata, 
+#     all_annotated_treatmentMetadata, 
+#     by.x = "GDSC.treatmentid", 
+#     by.y = "pubchem.name", 
+#     all.x = TRUE
 
-)
-
+# )
+final_treatmentMetadata <- all_annotated_treatmentMetadata
 
 
 ###############################################################################

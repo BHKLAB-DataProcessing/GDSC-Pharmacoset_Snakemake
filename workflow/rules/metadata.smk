@@ -2,7 +2,6 @@ from pathlib import Path
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-configfile: "workflow/config/pipeline.yaml"
 conda_env = "../envs/metadata.yaml"
 
 rawdata = Path(config["directories"]["rawdata"])
@@ -15,7 +14,7 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-annotationGx_docker = "docker://bhklab/annotationgx-r:0.0.0.9095"
+annotationGx_docker = "docker://bhklab/annotationgx-r:0.0.0.9097"
 
 ################################################################################################
 # MOTHER RULES
@@ -133,7 +132,7 @@ rule annotate_SampleMetadata:
     input:
         sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv"
     output:
-        sample_Cellosaurus_file = procdata / "metadata" / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        sampleMetadata = procdata / "metadata" / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
     container: 
         annotationGx_docker
     threads:

@@ -69,11 +69,11 @@ final_annotated <- merge(
 
 final_annotated[, sampleid := "GDSC.sampleid"]
 
-message("Writing output to: ", OUTPUT[['sample_Cellosaurus_file']])
+message("Writing output to: ", OUTPUT[['sampleMetadata']])
 
 data.table::fwrite(
     final_annotated, 
-    OUTPUT[['sample_Cellosaurus_file']], 
+    OUTPUT[['sampleMetadata']], 
     sep="\t", 
     quote = FALSE, 
     row.names = FALSE, 

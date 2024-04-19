@@ -2,8 +2,6 @@ from pathlib import Path
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-configfile: "workflow/config/pipeline.yaml"
-
 rawdata = Path(config["directories"]["rawdata"])
 procdata = Path(config["directories"]["procdata"])
 metadata = Path(config["directories"]["metadata"])

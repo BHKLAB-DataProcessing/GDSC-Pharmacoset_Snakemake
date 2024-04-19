@@ -4,9 +4,6 @@ import json
 
 HTTP = HTTPRemoteProvider()
 
-configfile: "workflow/config/pipeline.yaml"
-
-
 rawdata = Path(config["directories"]["rawdata"])
 procdata = Path(config["directories"]["procdata"])
 metadata = Path(config["directories"]["metadata"])
