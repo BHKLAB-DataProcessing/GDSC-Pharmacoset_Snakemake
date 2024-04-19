@@ -11,3 +11,6 @@ cog.sanger.ac.uk/
 .cache
 orcestradata/
 rdata_files
+
+*.rds
+*.RDS
