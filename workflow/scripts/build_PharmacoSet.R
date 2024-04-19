@@ -1,161 +1,113 @@
-#' RULE: build_PharmacoSet
-#' AUTHOR: Jermiah Joseph
-#' DATE: 01-15-2024
-#' This script takes in the following files:
-#' - INPUT$metadata
-#' - INPUT$summarizedExperiments
-#' and outputs the following files:
-#' - OUTPUT$pset
-#' 
-#' Libraries Used:
-#' - MultiAssayExperiment
-#' - log4r
-#' - BiocParallel
-#' - qs
-#' - SummarizedExperiment
-#' - CoreGx
-#' - PharmacoGx
 ## ------------------- Parse Snakemake Object ------------------- ##
 # Check if the "snakemake" object exists
+# This snippet is run at the beginning of a snakemake run to setup the env
+# Helps to load the workspace if the script is run independently or debugging
 if(exists("snakemake")){
     INPUT <- snakemake@input
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image()
-    
+
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
-        sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
+        sink(
+            file = snakemake@log[[1]], 
+            append = FALSE, 
+            type = c("output", "message"), 
+            split = TRUE
+    )
 
+    # Assuming that this script is named after the rule
+    # Saves the workspace to "resources/"build_PharmacoSet"
+    file.path("resources", paste0(snakemake@rule, ".RData")) |> 
+        save.image()
+}else{
+    # If the snakemake object does not exist, load the workspace
+    file.path("resources", "build_PharmacoSet.RData") |>
+        load()
 }
 
-suppressPackageStartupMessages(library(PharmacoGx))
-
-
-# 0.2 Read in the metadata
-# --------------------------
-
-treatmentMetadata <- data.table::fread(INPUT$annotated_treatmentMetadata)
+library(PharmacoGx)
+library(data.table)
+###############################################################################
+# Load INPUT
+###############################################################################
+message("Reading in SampleMetadata")
 sampleMetadata <- data.table::fread(INPUT$annotated_sampleMetadata)
-geneAnnotation  <- data.table::fread(INPUT$geneAnnotation)
 
+message("Reading in TreatmentMetadata")
+treatmentMetadata <- data.table::fread(INPUT$annotated_treatmentMetadata)
 
-# 0.3 Read in the summarized experiments
-# --------------------------------------
-# Read the summarized experiments
-print(paste("Loading: ", INPUT$summarizedExperimentLists, sep = "\n\t"))
-summarizedExperimentLists <- unlist(lapply(INPUT$summarizedExperimentLists, readRDS))
-
-# 0.4 Read in treatmentResponseExperiment
-# ----------------------------------------
-print(paste("Loading: ", INPUT$treatmentResponseExperiment, sep = "\n\t"))
+message("Reading in TreatmentResponseExperiment")
 tre <- readRDS(INPUT$treatmentResponseExperiment)
 
-# 1.0 Build MultiAssayExperiment
-# ------------------------------
-# Extract unique sample IDs from the summarized experiments
+message("Reading in MultiAssayExperiment")
+mae <- readRDS(INPUT$multiAssayExperiment)
 
-se_list <- sapply(summarizedExperimentLists, function(x){
-    if(!all(colnames(x) %in% sampleMetadata$GDSC.sampleid)){
-        print("Not all colnames of the summarized experiment are in the sample metadata")
-        new_x <- x[, colnames(x) %in% sampleMetadata$GDSC.sampleid]
+###############################################################################
+# Main Script
+###############################################################################
 
-        # remove duplicated columns
-        new_x <- new_x[, !duplicated(colnames(new_x))]
-    
-        return(new_x)
-    }
-    else{
-        new_x <- x[, !duplicated(colnames(x))]
-        return(new_x)
-    }
-})
-stopifnot(all(sapply(se_list, function(x){
-    # make sure colnames of each SE is in sampleMetadat$GDSC.sampleid
-    all(colnames(x) %in% sampleMetadata$GDSC.sampleid)
-})))
-summarizedExperimentLists <- se_list
-summarizedExperimentLists <- sapply(summarizedExperimentLists, function(x){
-    x@colData <- DataFrame(
-        sampleid = colnames(x),
-        batchid = rep(NA, ncol(x)),
-        row.names = colnames(x)
-    )
-    x
-})
-# Remove duplicate sample IDs
-sample <- sampleMetadata[!duplicated(GDSC.sampleid), ]
+## ------------------------------------------------------------------------- ##
+# SANITY CHECKS
 
-# convert sample into a data frame with the rownames being the sample IDs
-# and ordered by the sample IDs
-sample <- data.frame(sample, row.names = sample$GDSC.sampleid)
-sample <- sample[order(rownames(sample)), ]
+# Need to make sure that the sampleMetadata and the colnames of the summarized
+# experiments are the same
 
-print(sprintf("Total number of samples across all experiments: %d", nrow(sample)))
+allSamples <- sapply(names(mae), function(se) colnames(mae[[se]])) |>
+    unlist() |>
+    unique()
 
+# Check if all the samples in the MultiAssayExperiment are in the sampleMetadata
+stopifnot(all(allSamples %in% sampleMetadata$sampleid))
 
-treatment <- treatmentMetadata[!duplicated(treatmentMetadata$GDSC.treatmentid), ]
-treatment <- data.frame(treatment, row.names = treatment$GDSC.treatmentid)
-treatment <- treatment[order(rownames(treatment)), ]
-print(sprintf("Total number of treatments: %d", nrow(treatment)))
+treSamples <- tre@colData$sampleid |> 
+    unique() 
+stopifnot(all(treSamples %in% sampleMetadata$sampleid))
 
+allTreatments <- unique(tre@rowData$treatmentid)
 
-# Create a data frame for the column data, including sample IDs and batch IDs
-colData <- data.frame(
-    sampleid = sample$GDSC.sampleid,
-    batchid = rep(NA, length(sample$GDSC.sampleid)),
-    row.names = sample$GDSC.sampleid
+# Check if all the treatments in the TreatmentResponseExperiment are in the treatmentMetadata
+stopifnot(all(allTreatments %in% treatmentMetadata$treatmentid))
+
+## ------------------------------------------------------------------------- ##
+
+treatmentMetadata <- treatmentMetadata[!duplicated(treatmentid),]
+treatment_df <-  data.frame(
+    treatmentMetadata, 
+    row.names = treatmentMetadata$treatmentid)
+
+sampleMetadata <- sampleMetadata[!duplicated(sampleid),]
+sample_df <- data.frame(
+    sampleMetadata, 
+    row.names = sampleMetadata$sampleid
 )
-print(sprintf("Column data has %d rows and %d columns", nrow(colData), ncol(colData)))
-
-# Create an ExperimentList object from the filtered summarized experiments
-ExpList <- MultiAssayExperiment::ExperimentList(summarizedExperimentLists)
-print(paste("ExperimentList:", capture.output(show(ExpList)), sep = ""))
-
-# Create a sample map for each experiment in the ExperimentList
-sampleMapList <- lapply(summarizedExperimentLists, function(se){
-    data.frame(
-        primary = colnames(se),
-        colname = colnames(se),
-        stringsAsFactors = FALSE
-    )
-})
-names(sampleMapList) <- names(ExpList)
-print(paste("Sample map list:", capture.output(str(sampleMapList)), sep = ""))
-
-# Convert the sample map list to a single sample map
-mae_sampleMap <- MultiAssayExperiment::listToMap(sampleMapList)
-print(paste("Sample map:\n", capture.output(str(mae_sampleMap)), sep = ""))
-
-# Create a MultiAssayExperiment object with the ExperimentList, column data, and sample map
-mae <- MultiAssayExperiment::MultiAssayExperiment(
-    experiments = ExpList,
-    colData = colData,
-    sampleMap = MultiAssayExperiment::listToMap(sampleMapList)
-)
-print(paste("MultiAssayExperiment:\n", capture.output(show(mae)), sep = ""))
-
 
 name <- paste(WILDCARDS$version, WILDCARDS$release, sep = "v")
 print(paste("Name:", name))
 
-print("Creating PharmacoSet object")
 pset <- PharmacoGx::PharmacoSet2(
     name = name,
-    treatment = treatment,
-    sample = sample,
+    treatment = treatment_df,
+    sample = sample_df,
     molecularProfiles = mae,
     treatmentResponse = tre,
-    perturbation = list(),
-    curation = list(sample = data.frame(), treatment = data.frame(), tissue = data.frame()),
+    curation = list(
+        sample = sample_df,
+        treatment = treatment_df,
+        tissue = data.frame()
+    ),
     datasetType = "sensitivity"
 )
 
-print(paste("PharmacoSet object:", capture.output(show(pset)), sep = ""))
-
-print(paste("Saving PharmacoSet object to", OUTPUT[[1]]))
-dir.create(dirname(OUTPUT[[1]]), recursive = TRUE, showWarnings = FALSE)
-saveRDS(pset, file = OUTPUT[[1]])
 
 
+###############################################################################
+# Save OUTPUT 
+###############################################################################
+# OUTPUT[[1]]
+
+message("Saving pset to ", OUTPUT[[1]])
+dir.create(dirname(OUTPUT[[1]]), showWarnings = FALSE, recursive = TRUE)
+
+saveRDS(pset, OUTPUT[[1]])

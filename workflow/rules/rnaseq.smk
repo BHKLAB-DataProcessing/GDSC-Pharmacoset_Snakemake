@@ -2,8 +2,6 @@ from pathlib import Path
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-configfile: "workflow/config/pipeline.yaml"
-conda_env: "../envs/rnaseq.yaml"
 rawdata = Path(config["directories"]["rawdata"])
 procdata = Path(config["directories"]["procdata"])
 metadata = Path(config["directories"]["metadata"])
@@ -13,6 +11,7 @@ scripts = Path("../scripts")
 
 version = config["GDSC_version"]
 release = config["GDSC_release"]
+conda_env = "../envs/rnaseq.yaml"
 
 ################################################################################
 ## RNA-SEQ

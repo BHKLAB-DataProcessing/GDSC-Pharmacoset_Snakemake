@@ -11,14 +11,15 @@ if(exists("snakemake")){
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 }
 
-
 suppressPackageStartupMessages(library(PharmacoGx))
 suppressPackageStartupMessages(library(CoreGx))
 
 
 ## ------------------- Load Data ------------------- ##
+message("Loading data")
 tre <- readRDS(INPUT$tre)
 
+message("Fitting treatment response curves")
 tre_fit <- tre |> CoreGx::endoaggregate(
     {  # the entire code block is evaluated for each group in our group by
         # 1. fit a log logistic curve over the dose range
@@ -39,10 +40,11 @@ tre_fit <- tre |> CoreGx::endoaggregate(
         )
     },
     assay="sensitivity",
-    target="profiles_recomputed",
+    target="profiles",
     enlist=FALSE,  # this option enables the use of a code block for aggregation
     by=c("treatmentid", "sampleid"),
     nthread=THREADS  # parallelize over multiple cores to speed up the computation
 )
 
+message("Saving results")
 saveRDS(tre_fit, OUTPUT$tre_fit)

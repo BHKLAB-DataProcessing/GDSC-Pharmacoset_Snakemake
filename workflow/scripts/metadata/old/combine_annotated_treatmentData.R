@@ -5,14 +5,12 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image("combine_annotated_treatmentData.RData")
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
 }
-load("combine_annotated_treatmentData.RData")
 library(data.table)
 annotated_ChEMBL <- data.table::fread(INPUT$annotated_ChEMBL, header = TRUE, sep = "\t")
 treatmentMetadata <- data.table::fread(INPUT$treatmentMetadata, header = TRUE, sep = "\t")

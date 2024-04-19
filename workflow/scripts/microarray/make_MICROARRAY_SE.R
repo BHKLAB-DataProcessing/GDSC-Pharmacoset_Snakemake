@@ -29,8 +29,6 @@ if(exists("snakemake")){
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
-
-    save.image("rdata_files/make_MICROARRAY_SE.RData")
 }
 
 # Need to do this because affy:rma() uses parallel processing which is not supported in the current environment

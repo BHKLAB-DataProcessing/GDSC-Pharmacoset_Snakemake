@@ -5,14 +5,12 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image("annotate_ChEMBL.RData")
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
 }
-load("annotate_ChEMBL.RData")
 message("Reading annotated ChEMBL file: ", INPUT$annotated_CIDS)
 chembl_dt <- data.table::fread(INPUT$annotated_CIDS, header = TRUE, sep = "\t")
 

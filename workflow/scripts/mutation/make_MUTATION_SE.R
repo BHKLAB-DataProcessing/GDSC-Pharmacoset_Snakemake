@@ -10,7 +10,6 @@ if(exists("snakemake")){
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
-    save.image("rdata_files/make_MUTATION_SE.RData")
 }
 
 library(data.table)
@@ -50,7 +49,18 @@ mut_dt <- unique(merge(
     by.x = "CMP.model_id", by.y = "model_id"))
 
 
-# 2.0 Create Assays object from mut_dt
+# Setup metadata for SummarizedExperiment object
+# --------------------------------------------------
+metadata <- list(
+    annotation = "mutation",
+    class = "RangedSummarizedExperiment",
+    data_source = snakemake@config$molecularProfiles$mutation$all_mutations,
+    filename = basename(INPUT$all_mutations),
+    date_created = Sys.Date()
+)
+
+
+# Create Assays object from mut_dt
 # -------------------------------------------------
 # isolate only columns to use for assay
 assay_cols <- c("protein_mutation", "rna_mutation",
@@ -80,28 +90,15 @@ matrices <- BiocParallel::bplapply(assay_cols, function(x){
         rownames = assay_mtx[["gene_symbol"]])
     
     print(sprintf(
-            "Matrix %s has %d rows and %d columns", x, nrow(mtx), ncol(mtx)))
-    mtx
+        "Matrix %s has %d rows and %d columns", x, nrow(mtx), ncol(mtx)))
+
+    return(mtx)
     },
     BPPARAM = BiocParallel::MulticoreParam(workers = THREADS))
 names(matrices) <- assay_cols
 
-# Num samples in each matrix
-numSamples <- max(sapply(matrices, ncol))
-
-# 4.0 Setup metadata for SummarizedExperiment object
-# --------------------------------------------------
-metadata <- list(
-    data_source = snakemake@config$molecularProfiles$mutation$all_mutations,
-    filename = basename(INPUT$all_mutations),
-    annotation = "mutation",
-    date_created = Sys.Date(),
-    sessionInfo = capture.output(sessionInfo())
-)
-
 
 print("Creating SummarizedExperiment objects")
-
 rse_list <- lapply(names(matrices), function(matrix_name){
 
     x <- matrices[[matrix_name]]
@@ -122,16 +119,15 @@ rse_list <- lapply(names(matrices), function(matrix_name){
     )
 
     metadata$datatype = matrix_name
-    metadata$samples = ncol(assay)
-    metadata$genes = nrow(assay)
+    metadata$numSamples = ncol(assay)
+    metadata$numGenes = nrow(assay)
     metadata$gene_annotation = INPUT$geneAnnotation
-
 
     rse <- SummarizedExperiment::SummarizedExperiment(
         assays = list(exprs = assay),
         rowRanges = gr,
-        metadata = metadata,
-        colData = colData
+        colData = colData,
+        metadata = metadata
     )
 })
 
@@ -142,14 +138,20 @@ print("Writing output to disk")
 
 # 5.0 Save Output
 # ---------------
+message("Saving metadata to: ", OUTPUT$metadata)
 jsonlite::write_json(metadata, OUTPUT$metadata)
 
+message("Saving RSE list to: ", OUTPUT$rse_list)
 dir.create(dirname(OUTPUT$rse_list), recursive = TRUE, showWarnings = FALSE)
 saveRDS(rse_list, file = OUTPUT$rse_list)
 
+
+# write assay matrices to disk
+message("Writing assay matrices to disk")
 outputs_written <- lapply(names(rse_list), function(x) {
     assay <- SummarizedExperiment::assay(rse_list[[x]], "exprs")
     filename <- gsub("mut.", "", x)
+    message("Writing ", filename, " to ", OUTPUT[[filename]])
     write.table(
         assay,
         file = OUTPUT[[filename]],

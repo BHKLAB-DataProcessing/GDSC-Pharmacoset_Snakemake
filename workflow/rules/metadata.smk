@@ -2,7 +2,6 @@ from pathlib import Path
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-configfile: "workflow/config/pipeline.yaml"
 conda_env = "../envs/metadata.yaml"
 
 rawdata = Path(config["directories"]["rawdata"])
@@ -15,19 +14,33 @@ scripts = Path("../scripts")
 version = config["GDSC_version"]
 release = config["GDSC_release"]
 
-annotationGx_docker = "docker://jjjermiah/annotationgx-r:0.0.0.9058"
+annotationGx_docker = "docker://bhklab/annotationgx-r:0.0.0.9097"
 
 ################################################################################################
 # MOTHER RULES
 ################################################################################################
+# run any of these rules i.e snakemake ... run_annotate_treatmentMetadata without any of the other rules
+
+rule run_annotate_treatmentMetadata:
+    input:
+        treatment_CIDS = expand(
+            procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+            release = release), 
+
+rule run_annotate_sampleMetadata:
+    input:
+        sample_Cellosaurus_file = expand(
+            procdata / metadata / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+            release = release),
+
 rule preprocess_metadata:
     input:
         treatmentMetadata_annot = expand(
-             results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
-            version = version, release = release),
+            results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+            release = release),
         sampleMetadata_annot = expand(
             results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
-            version = version, release = release),
+            release = release),
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv"
 
 rule download_ONLY:
@@ -107,8 +120,10 @@ rule preprocess_sampleMetadata:
         CMP_sampleAnnotation = metadata / "cellModelPassports_sampleAnnotation.csv"
     output:
         sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv",
-    log: logs / metadata / "GDSC_{release}_preprocess_sampleMetadata.log"
-    conda: conda_env
+    log: 
+        logs / metadata / "GDSC_{release}_preprocess_sampleMetadata.log"
+    conda: 
+        conda_env
     script:
         scripts / metadata / "preprocess_sampleMetadata.R"
 
@@ -117,7 +132,7 @@ rule annotate_SampleMetadata:
     input:
         sampleMetadata = procdata / metadata / "GDSC_{release}_preprocessed_sampleMetadata.tsv"
     output:
-        sample_Cellosaurus_file = results / "data" / "metadata" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
+        sampleMetadata = procdata / "metadata" / "annotation" / "GDSC_{release}_sampleMetadata_mappedCellosaurus.tsv",
     container: 
         annotationGx_docker
     threads:
@@ -134,8 +149,10 @@ rule preprocess_geneAnnotation:
         ensemblAnnotation = rules.download_EnsemblAnnotation.output.ensemblAnnotation
     output:
         geneAnnotation = procdata / metadata / "preprocessed_geneAnnotation.tsv",
-    log: logs / metadata / "preprocess_geneAnnotation.log"
-    conda: conda_env
+    log: 
+        logs / metadata / "preprocess_geneAnnotation.log"
+    conda: 
+        conda_env
     script:
         scripts / metadata / "preprocess_geneAnnotation.R"
 
@@ -148,8 +165,10 @@ rule preprocess_treatmentMetadata:
         treatmentMetadata = metadata / "GDSC_{release}_treatmentMetadata.csv",
     output:
         treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
-    log: logs / metadata / "GDSC_{release}_preprocess_treatmentMetadata.log"
-    conda: conda_env
+    log: 
+        logs / metadata / "GDSC_{release}_preprocess_treatmentMetadata.log"
+    container: 
+        annotationGx_docker
     script:
         scripts / metadata / "preprocess_treatmentMetadata.R"
 
@@ -158,7 +177,8 @@ rule map_treatments_to_PubChemCID:
         treatmentMetadata = procdata / metadata / "GDSC_{release}_preprocessed_treatmentMetadata.tsv",
     output:
         treatment_CIDS = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv",
-    log: logs / metadata / "GDSC_{release}_map_treatments_to_PubChemCID.log"
+    log: 
+        logs / metadata / "GDSC_{release}_map_treatments_to_PubChemCID.log"
     threads:
         8
     container: 
@@ -166,28 +186,16 @@ rule map_treatments_to_PubChemCID:
     script:
         scripts / metadata / "map_treatments_to_PubChemCID.R"
 
-
-rule annotate_ChEMBL:
+rule annotate_treatmentMetadata:
     input:
         annotated_CIDS = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv",
     output:
-        annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
-    log: logs / metadata / "GDSC_{release}_ChEMBL_annotated.log"
+        annotated_treatmentMetadata = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
+    log: 
+        logs / metadata / "GDSC_{release}_annotate_treatmentMetadata.log"
     threads:
-        1
+        8
     container: 
         annotationGx_docker
     script:
-        scripts / metadata / "annotate_ChEMBL.R"
-
-rule combine_annotated_treatmentData:
-    input:
-        annotated_ChEMBL = procdata / metadata / "annotation" / "GDSC_{release}_ChEMBL_annotated.tsv",
-        treatmentMetadata = procdata / metadata / "annotation" / "GDSC_{release}_treatmentMetadata_mapped_PubChem.tsv"
-    output:
-        annotated_treatmentMetadata = results / "data" / "metadata" / "GDSC_{release}_treatmentMetadata_annotated.tsv",
-    log: logs / metadata / "GDSC_{release}_treatmentMetadata_annotated.log"
-    container: 
-        annotationGx_docker
-    script:
-        scripts / metadata / "combine_annotated_treatmentData.R"
+        scripts / metadata / "annotate_treatmentMetadata.R"

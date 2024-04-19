@@ -93,10 +93,14 @@ Activate the environment:
 conda activate gdsc_pharmacoset
 ```
 
+## Workflow Execution
 
-## Workflow Execution:
+> [!NOTE]
+> The pipeline eventually works with hundreds of `.CEL` microarray files which causes the 
+> DAG building to take a few minutes.
 
 ### Main Run
+
 > [!NOTE]
 > The following command was tested on a linux machine, with 30 cores and 128GB of RAM.
 > The pipeline can be run on a machine with less resources, but it will take longer to complete.
@@ -107,11 +111,13 @@ snakemake --profile workflow/profiles/labserver
 ```
 
 ### Dry Run
+
 ```bash
 snakemake --profile workflow/profiles/labserver --dryrun
 ```
 
 ### Create all Conda Environments
+
 > [!TIP] 
 > Creating each conda environment can take a long time when running the entire pipeline. 
 > To create all conda environments without running the pipeline, use the `--conda-create-envs-only` flag.
@@ -120,8 +126,8 @@ snakemake --profile workflow/profiles/labserver --dryrun
 snakemake --profile workflow/profiles/labserver --use-conda --conda-create-envs-only
 ```
 
+## Rulegraph
 
-## Rulegraph 
 ``` bash
 snakemake --profile workflow/profiles/labserver --rulegraph | dot -Tsvg > resources/rulegraph.svg
 ```
@@ -129,16 +135,17 @@ snakemake --profile workflow/profiles/labserver --rulegraph | dot -Tsvg > resour
 ![Rulegraph](./resources/rulegraph.svg)
 
 ## Directed Acyclic Graph (DAG)
+
 ```  bash
 snakemake --profile workflow/profiles/labserver -F --dag | dot -Tsvg > resources/dag.svg
 ```
 
 ![DAG](./resources/dag.svg)
 
-## Filegraph 
+## Filegraph
+
 ``` bash
 snakemake --profile workflow/profiles/labserver  --filegraph | dot -Tsvg > resources/filegraph.svg
 ```
 
 ![filegraph](./resources/filegraph.svg)
-

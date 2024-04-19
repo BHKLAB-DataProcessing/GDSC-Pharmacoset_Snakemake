@@ -2,8 +2,6 @@ from pathlib import Path
 from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
 HTTP = HTTPRemoteProvider()
 
-configfile: "workflow/config/pipeline.yaml"
-conda: "workflow/envs/snakemake.yaml"
 rawdata = Path(config["directories"]["rawdata"])
 procdata = Path(config["directories"]["procdata"])
 metadata = Path(config["directories"]["metadata"])
@@ -15,6 +13,7 @@ version = config["GDSC_version"]
 release = config["GDSC_release"]
 treatmentResponse = config["treatmentResponse"]
 
+conda: "workflow/envs/snakemake.yaml"
 rule process_allTreatmentResponse:
     input:
         preprocessed = expand(
@@ -55,9 +54,9 @@ rule build_treatmentResponseExperiment:
     conda:
         "../envs/treatmentResponse.yaml"
     threads:
-        30
+        8
     resources:
-        mem_mb = 96000
+        mem_mb = 16000
     script:
         scripts / "treatmentResponse/build_treatmentResponseExperiment.R"
 

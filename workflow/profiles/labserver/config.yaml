@@ -1,4 +1,3 @@
-snakefile: "../Snakefile"
 cores: 30
 show-failed-logs: True
 keep-going: True

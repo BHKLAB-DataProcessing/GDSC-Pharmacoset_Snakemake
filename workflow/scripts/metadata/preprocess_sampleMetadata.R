@@ -5,14 +5,12 @@ if(exists("snakemake")){
     OUTPUT <- snakemake@output
     WILDCARDS <- snakemake@wildcards
     THREADS <- snakemake@threads
-    save.image("preprocess_sampleMetadata.RData")
     
     # setup logger if log file is provided
     if(length(snakemake@log)>0) 
         sink(snakemake@log[[1]], FALSE, c("output", "message"), TRUE)
 
 }
-load("preprocess_sampleMetadata.RData")
 # cleanCharacterStrings function from utils.R
 snakemake@source("utils.R")
 
